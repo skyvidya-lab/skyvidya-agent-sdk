@@ -17,6 +17,7 @@ import Agents from "./pages/Agents";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import Logs from "./pages/Logs";
+import Quality from "./pages/Quality";
 import TenantDomains from "./pages/TenantDomains";
 import NotFound from "./pages/NotFound";
 
@@ -81,6 +82,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Logs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/quality"
+        element={
+          <ProtectedRoute>
+            <Quality />
           </ProtectedRoute>
         }
       />
