@@ -27,6 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateAgent, useUpdateAgent } from "@/hooks/useAgents";
+import { useTestAgentConnection } from "@/hooks/useTestAgentConnection";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Plug } from "lucide-react";
+import { useState } from "react";
 
 const agentSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres").max(100),
@@ -69,6 +73,8 @@ interface AgentFormProps {
 export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProps) {
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
+  const testConnection = useTestAgentConnection();
+  const [testResult, setTestResult] = useState<{ success: boolean; latency_ms: number } | null>(null);
 
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentSchema),
@@ -89,6 +95,31 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
 
   const selectedPlatform = form.watch("platform");
   const isExternal = ['dify', 'crewai', 'langflow'].includes(selectedPlatform);
+  
+  // Watch fields for test button validation
+  const platformAgentId = form.watch("platform_agent_id");
+  const apiEndpoint = form.watch("api_endpoint");
+  const apiKeyReference = form.watch("api_key_reference");
+  
+  const canTest = isExternal && !!(platformAgentId && apiEndpoint && apiKeyReference);
+
+  const handleTestConnection = () => {
+    setTestResult(null);
+    
+    testConnection.mutate({
+      platform: selectedPlatform,
+      api_endpoint: apiEndpoint || "",
+      api_key_reference: apiKeyReference || "",
+      platform_agent_id: platformAgentId || "",
+    }, {
+      onSuccess: (data) => {
+        setTestResult({ success: true, latency_ms: data.latency_ms });
+      },
+      onError: () => {
+        setTestResult({ success: false, latency_ms: 0 });
+      }
+    });
+  };
 
   const onSubmit = (data: AgentFormValues) => {
     if (agent) {
@@ -96,6 +127,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
         onSuccess: () => {
           onOpenChange(false);
           form.reset();
+          setTestResult(null);
         },
       });
     } else {
@@ -103,6 +135,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
         onSuccess: () => {
           onOpenChange(false);
           form.reset();
+          setTestResult(null);
         },
       });
     }
@@ -213,6 +246,34 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                       </FormItem>
                     )}
                   />
+                  
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestConnection}
+                      disabled={testConnection.isPending || !canTest}
+                    >
+                      {testConnection.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Testando...
+                        </>
+                      ) : (
+                        <>
+                          <Plug className="w-4 h-4 mr-2" />
+                          Testar Conexão
+                        </>
+                      )}
+                    </Button>
+                    
+                    {testResult && (
+                      <Badge variant={testResult.success ? "default" : "destructive"}>
+                        {testResult.success ? `✓ Sucesso (${testResult.latency_ms}ms)` : '✗ Falha'}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </>
             )}

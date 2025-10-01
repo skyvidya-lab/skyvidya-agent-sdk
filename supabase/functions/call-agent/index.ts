@@ -12,7 +12,59 @@ serve(async (req) => {
   }
 
   try {
-    const { agent_id, message, conversation_id } = await req.json();
+    const { agent_id, message, conversation_id, test_mode, platform, api_endpoint, api_key_reference, platform_agent_id } = await req.json();
+    
+    // Test mode: validate connection without full agent flow
+    if (test_mode) {
+      console.log('Test mode enabled:', { platform, api_endpoint, platform_agent_id, api_key_reference });
+      
+      if (!platform || !api_endpoint || !api_key_reference || !platform_agent_id) {
+        throw new Error('Test mode requires: platform, api_endpoint, api_key_reference, platform_agent_id');
+      }
+
+      const apiKey = Deno.env.get(api_key_reference);
+      if (!apiKey) {
+        console.error('API key not found:', api_key_reference);
+        throw new Error(`API key ${api_key_reference} not configured in secrets`);
+      }
+
+      const testAgent = {
+        platform,
+        api_endpoint,
+        platform_agent_id,
+      };
+
+      const startTime = Date.now();
+      
+      // Call platform with test message
+      let response;
+      switch (platform) {
+        case 'dify':
+          response = await callDifyAgent(testAgent, apiKey, 'Connection test', undefined);
+          break;
+        case 'crewai':
+          response = await callCrewAIAgent(testAgent, apiKey, 'Connection test');
+          break;
+        case 'langflow':
+          response = await callLangflowAgent(testAgent, apiKey, 'Connection test');
+          break;
+        default:
+          throw new Error(`Unsupported platform: ${platform}`);
+      }
+
+      const latency_ms = Date.now() - startTime;
+
+      console.log('Test successful:', { latency_ms, platform });
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Conexão estabelecida com sucesso',
+        latency_ms,
+        platform_response: response
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     if (!agent_id || !message) {
       throw new Error('agent_id and message are required');
