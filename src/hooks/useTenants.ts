@@ -40,7 +40,7 @@ export function useCreateTenant() {
       
       if (tenantError) throw tenantError;
 
-      const { error: configError } = await supabase
+      await supabase
         .from("tenant_config")
         .insert({
           tenant_id: tenantResult.id,
@@ -56,9 +56,9 @@ export function useCreateTenant() {
           enable_guest_access,
           enable_file_upload,
           enable_conversation_export,
-        });
-      
-      if (configError) throw configError;
+        })
+        .select()
+        .maybeSingle();
       return tenantResult;
     },
     onSuccess: () => {
