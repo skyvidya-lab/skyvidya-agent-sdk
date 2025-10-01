@@ -69,7 +69,7 @@ export const TestCaseList = ({ tenantId }: TestCaseListProps) => {
   };
 
   if (!tenantId) {
-    return <div>Selecione um workspace</div>;
+    return <div className="text-center py-8 text-muted-foreground">Selecione um tenant para visualizar os casos de teste</div>;
   }
 
   return (
