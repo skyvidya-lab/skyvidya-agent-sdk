@@ -17,6 +17,7 @@ import Agents from "./pages/Agents";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import Logs from "./pages/Logs";
+import TenantDomains from "./pages/TenantDomains";
 import NotFound from "./pages/NotFound";
 
 function AppContent() {
@@ -80,6 +81,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Logs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tenants/:id/domains"
+        element={
+          <ProtectedRoute>
+            <TenantDomains />
           </ProtectedRoute>
         }
       />

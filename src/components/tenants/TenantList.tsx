@@ -3,11 +3,13 @@ import { useTenants } from "@/hooks/useTenants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, ExternalLink } from "lucide-react";
+import { Plus, Pencil, ExternalLink, Globe } from "lucide-react";
 import { TenantForm } from "./TenantForm";
+import { useNavigate } from "react-router-dom";
 
 export function TenantList() {
   const { data: tenants, isLoading } = useTenants();
+  const navigate = useNavigate();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<any>(null);
 
@@ -53,15 +55,26 @@ export function TenantList() {
                 <Badge variant={tenant.is_active ? "default" : "secondary"}>
                   {tenant.is_active ? "Ativo" : "Inativo"}
                 </Badge>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="w-full"
-                  onClick={() => window.open(`/${tenant.slug}`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Ver Página Pública
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => window.open(`/${tenant.slug}`, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Ver Página
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => navigate(`/tenants/${tenant.id}/domains`)}
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Domínios
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
