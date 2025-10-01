@@ -311,6 +311,77 @@ export type Database = {
           },
         ]
       }
+      tenant_config: {
+        Row: {
+          accent_color: string | null
+          background_image_url: string | null
+          chat_placeholder: string | null
+          created_at: string | null
+          enable_conversation_export: boolean | null
+          enable_file_upload: boolean | null
+          enable_google_auth: boolean | null
+          enable_guest_access: boolean | null
+          font_family: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          tenant_id: string
+          updated_at: string | null
+          welcome_message: Json | null
+        }
+        Insert: {
+          accent_color?: string | null
+          background_image_url?: string | null
+          chat_placeholder?: string | null
+          created_at?: string | null
+          enable_conversation_export?: boolean | null
+          enable_file_upload?: boolean | null
+          enable_google_auth?: boolean | null
+          enable_guest_access?: boolean | null
+          font_family?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          tenant_id: string
+          updated_at?: string | null
+          welcome_message?: Json | null
+        }
+        Update: {
+          accent_color?: string | null
+          background_image_url?: string | null
+          chat_placeholder?: string | null
+          created_at?: string | null
+          enable_conversation_export?: boolean | null
+          enable_file_upload?: boolean | null
+          enable_google_auth?: boolean | null
+          enable_guest_access?: boolean | null
+          font_family?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+          welcome_message?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           config: Json | null
