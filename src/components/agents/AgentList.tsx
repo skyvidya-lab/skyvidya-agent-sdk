@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useAgents, useDeleteAgent } from "@/hooks/useAgents";
+import { useTestAgentConnection } from "@/hooks/useTestAgentConnection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Activity, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { AgentForm } from "./AgentForm";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,10 +25,13 @@ interface AgentListProps {
 export function AgentList({ tenantId }: AgentListProps) {
   const { data: agents, isLoading } = useAgents(tenantId);
   const deleteAgent = useDeleteAgent();
+  const testConnection = useTestAgentConnection();
   const [formOpen, setFormOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
+  const [testingAgentId, setTestingAgentId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; latency?: number; timestamp: Date }>>({});
 
   const handleEdit = (agent: any) => {
     setSelectedAgent(agent);
@@ -48,6 +53,60 @@ export function AgentList({ tenantId }: AgentListProps) {
       deleteAgent.mutate(agentToDelete);
       setDeleteDialogOpen(false);
       setAgentToDelete(null);
+    }
+  };
+
+  const handleTestConnection = async (agent: any) => {
+    setTestingAgentId(agent.id);
+    try {
+      const result = await testConnection.mutateAsync({
+        platform: agent.platform,
+        api_endpoint: agent.api_endpoint,
+        api_key_reference: agent.api_key_reference,
+        platform_agent_id: agent.platform_agent_id,
+      });
+      setTestResults(prev => ({
+        ...prev,
+        [agent.id]: {
+          success: result.success,
+          latency: result.latency_ms,
+          timestamp: new Date(),
+        }
+      }));
+    } catch (error) {
+      setTestResults(prev => ({
+        ...prev,
+        [agent.id]: {
+          success: false,
+          timestamp: new Date(),
+        }
+      }));
+    } finally {
+      setTestingAgentId(null);
+    }
+  };
+
+  const getStatusBadge = (agentId: string) => {
+    const result = testResults[agentId];
+    if (!result) return null;
+
+    const isRecent = Date.now() - result.timestamp.getTime() < 5 * 60 * 1000; // 5 minutos
+    if (!isRecent) return null;
+
+    if (result.success) {
+      return (
+        <Badge variant="default" className="gap-1">
+          <CheckCircle2 className="h-3 w-3" />
+          Online {result.latency && `(${result.latency}ms)`}
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <XCircle className="h-3 w-3" />
+          Offline
+        </Badge>
+      );
     }
   };
 
@@ -98,18 +157,47 @@ export function AgentList({ tenantId }: AgentListProps) {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
+                <div className="space-y-3">
+                  <div className="flex gap-2 flex-wrap">
                     <Badge variant="outline">{agent.platform}</Badge>
                     <Badge variant={agent.status === "active" ? "default" : "secondary"}>
                       {agent.status}
                     </Badge>
+                    {getStatusBadge(agent.id)}
                   </div>
                   {agent.model_name && (
                     <p className="text-sm text-muted-foreground">
                       Modelo: {agent.model_name}
                     </p>
                   )}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleTestConnection(agent)}
+                          disabled={testingAgentId === agent.id}
+                        >
+                          {testingAgentId === agent.id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Testando...
+                            </>
+                          ) : (
+                            <>
+                              <Activity className="h-4 w-4 mr-2" />
+                              Testar Conexão
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Validar conectividade com a plataforma externa</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </CardContent>
             </Card>
