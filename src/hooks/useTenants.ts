@@ -92,7 +92,7 @@ export function useUpdateTenant() {
       
       if (tenantError) throw tenantError;
 
-      const { error: configError } = await supabase
+      await supabase
         .from("tenant_config")
         .upsert({
           tenant_id: id,
@@ -108,9 +108,9 @@ export function useUpdateTenant() {
           enable_guest_access,
           enable_file_upload,
           enable_conversation_export,
-        }, { onConflict: "tenant_id" });
-      
-      if (configError) throw configError;
+        }, { onConflict: "tenant_id" })
+        .select()
+        .maybeSingle();
       return tenantResult;
     },
     onSuccess: () => {

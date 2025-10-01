@@ -256,6 +256,38 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="background_image_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Imagem de Background</FormLabel>
+                          <FormControl>
+                            <div className="space-y-2">
+                              {field.value && (
+                                <div className="relative w-full h-32 border rounded-lg overflow-hidden">
+                                  <img src={field.value} alt="Background preview" className="w-full h-full object-cover" />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6"
+                                    onClick={() => field.onChange("")}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                              <Input {...field} placeholder="https://exemplo.com/background.jpg" />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            URL da imagem de fundo para rotas públicas (ex: /plano-diretor)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <div className="grid grid-cols-3 gap-2">
                       <FormField
                         control={form.control}
@@ -428,13 +460,22 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
             <div className="sticky top-4">
               <h3 className="text-sm font-medium mb-3">Preview em Tempo Real</h3>
               <div 
-                className="rounded-lg border overflow-hidden"
+                className="rounded-lg border overflow-hidden relative"
                 style={{
                   backgroundColor: watchedValues.primary_color + "10",
                   borderColor: watchedValues.primary_color + "40",
+                  backgroundImage: watchedValues.background_image_url ? `url(${watchedValues.background_image_url})` : undefined,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
                 }}
               >
-                <div className="p-6 space-y-4" style={{ color: watchedValues.primary_color }}>
+                <div 
+                  className="p-6 space-y-4 relative z-10" 
+                  style={{ 
+                    color: watchedValues.primary_color,
+                    backgroundColor: watchedValues.background_image_url ? "rgba(255, 255, 255, 0.9)" : undefined,
+                  }}
+                >
                   {logoPreview && (
                     <img src={logoPreview} alt="Logo" className="h-12 object-contain" />
                   )}
