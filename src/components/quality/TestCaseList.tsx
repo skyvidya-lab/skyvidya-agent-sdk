@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTestCases, useDeleteTestCase, TestCaseFilters } from '@/hooks/useTestCases';
-import { useTenant } from '@/contexts/TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,8 +32,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-export const TestCaseList = () => {
-  const { tenant: currentTenant } = useTenant();
+interface TestCaseListProps {
+  tenantId: string;
+}
+
+export const TestCaseList = ({ tenantId }: TestCaseListProps) => {
   const [filters, setFilters] = useState<TestCaseFilters>({ isActive: true });
   const [searchQuery, setSearchQuery] = useState('');
   const [editingCase, setEditingCase] = useState<any>(null);
@@ -42,16 +44,16 @@ export const TestCaseList = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const { data: testCases = [], isLoading } = useTestCases(
-    currentTenant?.id || '',
+    tenantId,
     { ...filters, search: searchQuery }
   );
   const deleteCase = useDeleteTestCase();
 
   const handleDelete = async () => {
-    if (deletingCase && currentTenant?.id) {
+    if (deletingCase && tenantId) {
       await deleteCase.mutateAsync({ 
         id: deletingCase, 
-        workspaceId: currentTenant.id 
+        workspaceId: tenantId 
       });
       setDeletingCase(null);
     }
@@ -66,7 +68,7 @@ export const TestCaseList = () => {
     return colors[category] || 'bg-gray-500/10 text-gray-700 dark:text-gray-400';
   };
 
-  if (!currentTenant?.id) {
+  if (!tenantId) {
     return <div>Selecione um workspace</div>;
   }
 
@@ -144,7 +146,7 @@ export const TestCaseList = () => {
                     <TableCell>{testCase.expected_score_min}%</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <ExecuteTestButton testCaseId={testCase.id} />
+                        <ExecuteTestButton tenantId={tenantId} testCaseId={testCase.id} />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -176,6 +178,7 @@ export const TestCaseList = () => {
       </Card>
 
       <TestCaseForm
+        tenantId={tenantId}
         open={isFormOpen || !!editingCase}
         onOpenChange={(open) => {
           setIsFormOpen(open);

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useExecuteTest } from '@/hooks/useTestExecutions';
 import { useAgents } from '@/hooks/useAgents';
-import { useTenant } from '@/contexts/TenantContext';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,23 +18,23 @@ import {
 import { Play } from 'lucide-react';
 
 interface ExecuteTestButtonProps {
+  tenantId: string;
   testCaseId: string;
 }
 
-export const ExecuteTestButton = ({ testCaseId }: ExecuteTestButtonProps) => {
-  const { tenant: currentTenant } = useTenant();
+export const ExecuteTestButton = ({ tenantId, testCaseId }: ExecuteTestButtonProps) => {
   const [open, setOpen] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
-  const { data: agents = [] } = useAgents(currentTenant?.id || '');
+  const { data: agents = [] } = useAgents(tenantId);
   const executeTest = useExecuteTest();
 
   const handleExecute = async () => {
-    if (!currentTenant?.id || !selectedAgentId) return;
+    if (!tenantId || !selectedAgentId) return;
 
     await executeTest.mutateAsync({
       testCaseId,
       agentId: selectedAgentId,
-      workspaceId: currentTenant.id,
+      workspaceId: tenantId,
     });
 
     setOpen(false);

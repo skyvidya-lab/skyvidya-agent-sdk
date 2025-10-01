@@ -1,11 +1,13 @@
 import { useExecutionMetrics } from '@/hooks/useTestExecutions';
-import { useTenant } from '@/contexts/TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Zap, DollarSign, CheckCircle } from 'lucide-react';
 
-export const QualityMetrics = () => {
-  const { tenant: currentTenant } = useTenant();
-  const { data: metrics, isLoading } = useExecutionMetrics(currentTenant?.id || '');
+interface QualityMetricsProps {
+  tenantId: string;
+}
+
+export const QualityMetrics = ({ tenantId }: QualityMetricsProps) => {
+  const { data: metrics, isLoading } = useExecutionMetrics(tenantId);
 
   if (isLoading || !metrics) {
     return <div>Carregando métricas...</div>;

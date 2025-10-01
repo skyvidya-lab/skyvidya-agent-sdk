@@ -58,7 +58,7 @@ export default function Quality() {
           </div>
 
           {/* Metrics Overview */}
-          <QualityMetrics />
+          <QualityMetrics tenantId={profile.current_tenant_id} />
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="test-cases" className="space-y-4">
@@ -90,11 +90,12 @@ export default function Quality() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <TestCaseList />
+                  <TestCaseList tenantId={profile.current_tenant_id} />
                 </CardContent>
               </Card>
 
               <TestCaseForm 
+                tenantId={profile.current_tenant_id}
                 open={showNewTestCase} 
                 onOpenChange={setShowNewTestCase}
               />
@@ -109,7 +110,7 @@ export default function Quality() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <TestExecutionList />
+                  <TestExecutionList tenantId={profile.current_tenant_id} />
                 </CardContent>
               </Card>
             </TabsContent>

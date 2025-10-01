@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTestExecutions } from '@/hooks/useTestExecutions';
-import { useTenant } from '@/contexts/TenantContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -17,13 +16,14 @@ import { TestExecutionDetail } from './TestExecutionDetail';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export const TestExecutionList = () => {
-  const { tenant: currentTenant } = useTenant();
+interface TestExecutionListProps {
+  tenantId: string;
+}
+
+export const TestExecutionList = ({ tenantId }: TestExecutionListProps) => {
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   
-  const { data: executions = [], isLoading } = useTestExecutions(
-    currentTenant?.id || ''
-  );
+  const { data: executions = [], isLoading } = useTestExecutions(tenantId);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -42,7 +42,7 @@ export const TestExecutionList = () => {
     return 'text-red-600 dark:text-red-400';
   };
 
-  if (!currentTenant?.id) {
+  if (!tenantId) {
     return <div>Selecione um workspace</div>;
   }
 

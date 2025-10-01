@@ -2,7 +2,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateTestCase, useUpdateTestCase, TestCase } from '@/hooks/useTestCases';
-import { useTenant } from '@/contexts/TenantContext';
 import { useAgents } from '@/hooks/useAgents';
 import {
   Dialog,
@@ -41,14 +40,14 @@ const testCaseSchema = z.object({
 type TestCaseFormData = z.infer<typeof testCaseSchema>;
 
 interface TestCaseFormProps {
+  tenantId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   testCase?: TestCase | null;
 }
 
-export const TestCaseForm = ({ open, onOpenChange, testCase }: TestCaseFormProps) => {
-  const { tenant: currentTenant } = useTenant();
-  const { data: agents = [] } = useAgents(currentTenant?.id || '');
+export const TestCaseForm = ({ tenantId, open, onOpenChange, testCase }: TestCaseFormProps) => {
+  const { data: agents = [] } = useAgents(tenantId);
   const createCase = useCreateTestCase();
   const updateCase = useUpdateTestCase();
 
@@ -65,12 +64,12 @@ export const TestCaseForm = ({ open, onOpenChange, testCase }: TestCaseFormProps
   });
 
   const onSubmit = async (data: TestCaseFormData) => {
-    if (!currentTenant?.id) return;
+    if (!tenantId) return;
 
     const tagsArray = data.tags.split(',').map(tag => tag.trim()).filter(Boolean);
 
     const payload = {
-      workspace_id: currentTenant.id,
+      workspace_id: tenantId,
       category: data.category,
       question: data.question,
       expected_answer: data.expected_answer,
@@ -84,7 +83,7 @@ export const TestCaseForm = ({ open, onOpenChange, testCase }: TestCaseFormProps
     if (testCase) {
       await updateCase.mutateAsync({
         id: testCase.id,
-        workspaceId: currentTenant.id,
+        workspaceId: tenantId,
         ...payload,
       });
     } else {
