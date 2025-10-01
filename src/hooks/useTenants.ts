@@ -61,10 +61,8 @@ export function useCreateTenant() {
         .maybeSingle();
       return tenantResult;
     },
-    onSuccess: (newTenant) => {
-      queryClient.setQueryData(["tenants"], (old: any) => {
-        return old ? [...old, newTenant] : [newTenant];
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
       toast.success("Tenant criado com sucesso");
     },
     onError: (error: any) => {
@@ -115,12 +113,8 @@ export function useUpdateTenant() {
         .maybeSingle();
       return tenantResult;
     },
-    onSuccess: (updatedTenant) => {
-      queryClient.setQueryData(["tenants"], (old: any) => {
-        return old?.map((t: any) => 
-          t.id === updatedTenant.id ? { ...t, ...updatedTenant } : t
-        );
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenants"] });
       toast.success("Tenant atualizado com sucesso");
     },
     onError: (error: any) => {
