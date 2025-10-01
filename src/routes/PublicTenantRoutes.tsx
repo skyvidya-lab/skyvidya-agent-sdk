@@ -1,6 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Tenant } from '@/hooks/useTenantRouter';
 import { useEffect } from 'react';
+import { TenantAuth } from '@/pages/public/TenantAuth';
+import { TenantChat } from '@/pages/public/TenantChat';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
 const TenantHomePage = ({ tenant }: { tenant: Tenant }) => {
   const config = tenant.tenant_config;
@@ -30,10 +35,16 @@ const TenantHomePage = ({ tenant }: { tenant: Tenant }) => {
         <p className="text-xl text-muted-foreground mb-8">
           {config?.hero_subtitle || 'Bem-vindo'}
         </p>
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Public Web UI em construção...
-          </p>
+        <div className="space-y-6">
+          <div className="flex gap-4 justify-center">
+            <Button size="lg" onClick={() => window.location.href = `/${tenant.slug}/auth`}>
+              Começar Agora
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => window.location.href = `/${tenant.slug}/auth?tab=interest`}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Manifestar Interesse
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
             Tenant: <span className="font-mono">{tenant.slug}</span>
           </p>
@@ -98,7 +109,16 @@ export function PublicTenantRoutes({ tenant }: { tenant: Tenant }) {
   return (
     <Routes>
       <Route path="/" element={<TenantHomePage tenant={tenant} />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/auth" element={<TenantAuth tenant={tenant} />} />
+      <Route 
+        path="/chat" 
+        element={
+          <ProtectedRoute>
+            <TenantChat tenant={tenant} />
+          </ProtectedRoute>
+        } 
+      />
+      <Route path="*" element={<Navigate to={`/${tenant.slug}`} replace />} />
     </Routes>
   );
 }
