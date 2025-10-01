@@ -6,10 +6,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to save structured logs
+async function saveLog(
+  supabase: any,
+  level: 'info' | 'warn' | 'error',
+  message: string,
+  context: Record<string, any>
+) {
+  try {
+    await supabase.from('logs').insert({
+      level,
+      message,
+      context,
+      tenant_id: context.tenant_id,
+      user_id: context.user_id,
+    });
+  } catch (error) {
+    console.error('Failed to save log:', error);
+  }
+}
+
+// Helper function to save agent call metrics
+async function saveAgentCallMetrics(
+  supabase: any,
+  data: {
+    tenant_id: string;
+    agent_id: string;
+    conversation_id?: string;
+    user_id?: string;
+    message_length: number;
+    platform: string;
+    status: 'success' | 'error' | 'timeout';
+    response_time_ms?: number;
+    tokens_used?: number;
+    error_message?: string;
+    error_code?: string;
+    metadata?: Record<string, any>;
+  }
+) {
+  try {
+    await supabase.from('agent_calls').insert(data);
+  } catch (error) {
+    console.error('Failed to save agent call metrics:', error);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
 
   try {
     const { agent_id, message, conversation_id, test_mode, platform, api_endpoint, api_key_reference, platform_agent_id } = await req.json();
@@ -70,13 +120,8 @@ serve(async (req) => {
       throw new Error('agent_id and message are required');
     }
 
+    const startTime = Date.now();
     console.log('Calling agent:', { agent_id, message_length: message.length, conversation_id });
-    
-    // Create Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
     
     // Fetch agent configuration
     const { data: agent, error: agentError } = await supabase
@@ -87,10 +132,24 @@ serve(async (req) => {
     
     if (agentError || !agent) {
       console.error('Agent not found:', agentError);
+      await saveLog(supabase, 'error', 'Agent not found', {
+        agent_id,
+        error: agentError?.message,
+        tenant_id: null,
+        user_id: null,
+      });
       throw new Error('Agent not found');
     }
 
     console.log('Agent loaded:', { platform: agent.platform, api_endpoint: agent.api_endpoint });
+    
+    await saveLog(supabase, 'info', 'Agent call started', {
+      tenant_id: agent.tenant_id,
+      agent_id: agent.id,
+      conversation_id,
+      platform: agent.platform,
+      message_length: message.length,
+    });
     
     // Fetch API key from secrets
     if (!agent.api_key_reference) {
@@ -158,7 +217,30 @@ serve(async (req) => {
         throw new Error(`Unsupported platform: ${agent.platform}`);
     }
     
-    console.log('Agent response received');
+    const responseTime = Date.now() - startTime;
+    console.log('Agent response received:', { response_time_ms: responseTime });
+    
+    // Save metrics
+    await saveAgentCallMetrics(supabase, {
+      tenant_id: agent.tenant_id,
+      agent_id: agent.id,
+      conversation_id,
+      message_length: message.length,
+      platform: agent.platform,
+      status: 'success',
+      response_time_ms: responseTime,
+      tokens_used: (response as any).metadata?.tokens_used,
+      metadata: (response as any).metadata,
+    });
+    
+    await saveLog(supabase, 'info', 'Agent call completed', {
+      tenant_id: agent.tenant_id,
+      agent_id: agent.id,
+      conversation_id,
+      platform: agent.platform,
+      response_time_ms: responseTime,
+      status: 'success',
+    });
     
     // Se é a primeira mensagem com Dify, salvar external_session_id retornado
     if (agent.platform === 'dify' && conversation_id && !externalSessionId && (response as any).conversation_id) {
@@ -180,6 +262,46 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('Error calling agent:', error);
+    
+    // Save error log and metrics if we have agent info
+    try {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Try to get agent_id from request if available
+      const body = await req.clone().json().catch(() => ({}));
+      
+      if (body.agent_id && supabase) {
+        const { data: agent } = await supabase
+          .from('agents')
+          .select('id, tenant_id, platform')
+          .eq('id', body.agent_id)
+          .single();
+        
+        if (agent) {
+          await saveLog(supabase, 'error', 'Agent call failed', {
+            tenant_id: agent.tenant_id,
+            agent_id: agent.id,
+            conversation_id: body.conversation_id,
+            platform: agent.platform,
+            error: errorMessage,
+          });
+          
+          await saveAgentCallMetrics(supabase, {
+            tenant_id: agent.tenant_id,
+            agent_id: agent.id,
+            conversation_id: body.conversation_id,
+            message_length: body.message?.length || 0,
+            platform: agent.platform,
+            status: 'error',
+            error_message: errorMessage,
+            error_code: (error as any).code || 'UNKNOWN',
+          });
+        }
+      }
+    } catch (logError) {
+      console.error('Failed to save error logs:', logError);
+    }
+    
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : 'Unknown error' 
     }), {

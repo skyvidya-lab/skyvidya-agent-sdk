@@ -15,6 +15,7 @@ import Tenants from "./pages/Tenants";
 import Agents from "./pages/Agents";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
+import Logs from "./pages/Logs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +73,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/logs"
+        element={
+          <ProtectedRoute>
+            <Logs />
           </ProtectedRoute>
         }
       />

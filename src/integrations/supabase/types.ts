@@ -14,6 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_calls: {
+        Row: {
+          agent_id: string
+          conversation_id: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          message_length: number
+          metadata: Json | null
+          platform: string
+          response_time_ms: number | null
+          status: string
+          tenant_id: string
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          conversation_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_length: number
+          metadata?: Json | null
+          platform: string
+          response_time_ms?: number | null
+          status: string
+          tenant_id: string
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          message_length?: number
+          metadata?: Json | null
+          platform?: string
+          response_time_ms?: number | null
+          status?: string
+          tenant_id?: string
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_calls_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_calls_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_calls_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           api_endpoint: string | null
