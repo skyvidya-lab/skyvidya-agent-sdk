@@ -8,7 +8,10 @@ export function useTenants() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tenants")
-        .select("*")
+        .select(`
+          *,
+          tenant_config (*)
+        `)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
@@ -22,14 +25,41 @@ export function useCreateTenant() {
 
   return useMutation({
     mutationFn: async (tenant: any) => {
-      const { data, error } = await supabase
+      const { 
+        secondary_color, accent_color, font_family, background_image_url,
+        hero_title, hero_subtitle, chat_placeholder, welcome_message,
+        enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
+        ...tenantData 
+      } = tenant;
+
+      const { data: tenantResult, error: tenantError } = await supabase
         .from("tenants")
-        .insert(tenant)
+        .insert(tenantData)
         .select()
         .single();
       
-      if (error) throw error;
-      return data;
+      if (tenantError) throw tenantError;
+
+      const { error: configError } = await supabase
+        .from("tenant_config")
+        .insert({
+          tenant_id: tenantResult.id,
+          secondary_color,
+          accent_color,
+          font_family,
+          background_image_url,
+          hero_title,
+          hero_subtitle,
+          chat_placeholder,
+          welcome_message,
+          enable_google_auth,
+          enable_guest_access,
+          enable_file_upload,
+          enable_conversation_export,
+        });
+      
+      if (configError) throw configError;
+      return tenantResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
@@ -46,15 +76,42 @@ export function useUpdateTenant() {
 
   return useMutation({
     mutationFn: async ({ id, ...tenant }: any) => {
-      const { data, error } = await supabase
+      const { 
+        secondary_color, accent_color, font_family, background_image_url,
+        hero_title, hero_subtitle, chat_placeholder, welcome_message,
+        enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
+        ...tenantData 
+      } = tenant;
+
+      const { data: tenantResult, error: tenantError } = await supabase
         .from("tenants")
-        .update(tenant)
+        .update(tenantData)
         .eq("id", id)
         .select()
         .single();
       
-      if (error) throw error;
-      return data;
+      if (tenantError) throw tenantError;
+
+      const { error: configError } = await supabase
+        .from("tenant_config")
+        .upsert({
+          tenant_id: id,
+          secondary_color,
+          accent_color,
+          font_family,
+          background_image_url,
+          hero_title,
+          hero_subtitle,
+          chat_placeholder,
+          welcome_message,
+          enable_google_auth,
+          enable_guest_access,
+          enable_file_upload,
+          enable_conversation_export,
+        }, { onConflict: "tenant_id" });
+      
+      if (configError) throw configError;
+      return tenantResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
