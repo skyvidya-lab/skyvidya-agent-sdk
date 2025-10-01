@@ -1,1 +1,4 @@
 project_id = "qwtioetvfvfflbkzbpfu"
+
+[functions.call-agent]
+verify_jwt = false

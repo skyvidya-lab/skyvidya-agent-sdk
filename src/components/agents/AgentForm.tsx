@@ -32,12 +32,29 @@ const agentSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres").max(100),
   description: z.string().max(500).optional(),
   platform: z.enum(["dify", "langflow", "crewai", "native"]),
-  platform_agent_id: z.string().min(1, "ID do agente é obrigatório"),
+  platform_agent_id: z.string().optional(),
+  api_endpoint: z.string().url("URL inválida").optional().or(z.literal("")),
+  api_key_reference: z.string().optional(),
   model_name: z.string().optional(),
   temperature: z.number().min(0).max(1).optional(),
   max_tokens: z.number().min(100).max(4000).optional(),
   system_prompt: z.string().optional(),
   tenant_id: z.string().uuid(),
+}).refine((data) => {
+  const isExternal = ['dify', 'crewai', 'langflow'].includes(data.platform);
+  
+  if (isExternal) {
+    return !!(data.platform_agent_id && data.api_endpoint && data.api_key_reference);
+  }
+  
+  if (data.platform === 'native') {
+    return !!(data.model_name && data.system_prompt);
+  }
+  
+  return true;
+}, {
+  message: "Preencha todos os campos obrigatórios para a plataforma selecionada",
+  path: ["platform"],
 });
 
 type AgentFormValues = z.infer<typeof agentSchema>;
@@ -60,6 +77,8 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
       description: agent?.description || "",
       platform: agent?.platform || "dify",
       platform_agent_id: agent?.platform_agent_id || "",
+      api_endpoint: agent?.api_endpoint || "",
+      api_key_reference: agent?.api_key_reference || "",
       model_name: agent?.model_name || "",
       temperature: agent?.temperature || 0.7,
       max_tokens: agent?.max_tokens || 2000,
@@ -67,6 +86,9 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
       tenant_id: tenantId,
     },
   });
+
+  const selectedPlatform = form.watch("platform");
+  const isExternal = ['dify', 'crewai', 'langflow'].includes(selectedPlatform);
 
   const onSubmit = (data: AgentFormValues) => {
     if (agent) {
@@ -143,89 +165,163 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="platform_agent_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ID do Agente na Plataforma</FormLabel>
-                  <FormControl>
-                    <Input placeholder="agent-id-123" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            {isExternal && (
+              <>
+                <div className="space-y-4 border-l-4 border-primary pl-4">
+                  <h3 className="font-semibold text-sm">🔗 Configuração de API Externa</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="platform_agent_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ID do Agente na Plataforma *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="agent-id-123" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="api_endpoint"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>API Endpoint *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://api.dify.ai/v1" {...field} />
+                        </FormControl>
+                        <FormDescription>URL base da API da plataforma</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="api_key_reference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome do Secret *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="DIFY_API_KEY_TENANT_X" {...field} />
+                        </FormControl>
+                        <FormDescription>Nome do secret configurado no Lovable Cloud</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
+            )}
+            
+            {selectedPlatform === 'native' && (
+              <FormField
+                control={form.control}
+                name="platform_agent_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ID do Agente</FormLabel>
+                    <FormControl>
+                      <Input placeholder="agent-id-123" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            <div className={isExternal ? "space-y-4 bg-muted/30 p-4 rounded-lg" : "space-y-4 border-l-4 border-green-500 pl-4"}>
+              {isExternal && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">
+                      📝 Configurações LLM
+                    </h4>
+                    <span className="text-xs bg-muted px-2 py-0.5 rounded">Opcional - Metadados</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Campos opcionais para documentação. O processamento ocorre na plataforma externa.
+                  </p>
+                </div>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="model_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modelo (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="gpt-4" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              
+              {selectedPlatform === 'native' && (
+                <h3 className="font-semibold text-sm">🤖 Configuração LLM</h3>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="temperature"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Temperature</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="1"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>Valor entre 0 e 1</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="max_tokens"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Max Tokens</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="100"
-                      max="4000"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="system_prompt"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>System Prompt</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Você é um assistente útil..."
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              
+              <FormField
+                control={form.control}
+                name="model_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Modelo {selectedPlatform === 'native' && '*'}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="gpt-4" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="temperature"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Temperature {selectedPlatform === 'native' && '*'}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="1"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>Valor entre 0 e 1</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="max_tokens"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Max Tokens {selectedPlatform === 'native' && '*'}</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="100"
+                        max="4000"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="system_prompt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>System Prompt {selectedPlatform === 'native' && '*'}</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Você é um assistente útil..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar

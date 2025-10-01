@@ -16,8 +16,11 @@ export type Database = {
     Tables: {
       agents: {
         Row: {
+          api_endpoint: string | null
+          api_key_reference: string | null
           avatar_url: string | null
           config: Json | null
+          connection_config: Json | null
           created_at: string | null
           created_by: string | null
           description: string | null
@@ -34,8 +37,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          api_endpoint?: string | null
+          api_key_reference?: string | null
           avatar_url?: string | null
           config?: Json | null
+          connection_config?: Json | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
@@ -52,8 +58,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          api_endpoint?: string | null
+          api_key_reference?: string | null
           avatar_url?: string | null
           config?: Json | null
+          connection_config?: Json | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
