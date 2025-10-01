@@ -18,6 +18,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+interface AppSidebarProps {
+  currentTenant?: any;
+}
+
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Tenants", url: "/tenants", icon: Building2 },
@@ -27,7 +31,7 @@ const items = [
   { title: "Configurações", url: "/settings", icon: Settings },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ currentTenant }: AppSidebarProps) {
   const { state } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -40,7 +44,20 @@ export function AppSidebar() {
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarHeader className="border-b p-4">
-        {!isCollapsed && <TenantSwitcher />}
+        {!isCollapsed && (
+          <div className="space-y-3">
+            {currentTenant?.logo_url && (
+              <div className="flex justify-center pb-2">
+                <img 
+                  src={currentTenant.logo_url} 
+                  alt={currentTenant.name} 
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+            )}
+            <TenantSwitcher />
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>

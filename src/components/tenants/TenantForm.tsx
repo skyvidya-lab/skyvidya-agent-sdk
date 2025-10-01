@@ -23,9 +23,24 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateTenant, useUpdateTenant } from "@/hooks/useTenants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+// Fontes populares do Google Fonts
+const GOOGLE_FONTS = [
+  "Inter",
+  "Roboto",
+  "Open Sans",
+  "Montserrat",
+  "Lato",
+  "Poppins",
+  "Raleway",
+  "Ubuntu",
+  "Nunito",
+  "Playfair Display",
+];
 
 const tenantSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres").max(100),
@@ -377,6 +392,33 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="font_family"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fonte</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione uma fonte" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {GOOGLE_FONTS.map((font) => (
+                                <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                                  {font}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Fonte customizada do Google Fonts
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </TabsContent>
 
                   <TabsContent value="features" className="space-y-4">
@@ -469,11 +511,12 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                   backgroundPosition: "center",
                 }}
               >
-                <div 
+                 <div 
                   className="p-6 space-y-4 relative z-10" 
                   style={{ 
                     color: watchedValues.primary_color,
                     backgroundColor: watchedValues.background_image_url ? "rgba(255, 255, 255, 0.9)" : undefined,
+                    fontFamily: watchedValues.font_family ? `"${watchedValues.font_family}", sans-serif` : undefined,
                   }}
                 >
                   {logoPreview && (
