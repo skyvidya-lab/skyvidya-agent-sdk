@@ -125,7 +125,28 @@ serve(async (req) => {
     let response;
     switch (agent.platform) {
       case 'dify':
-        response = await callDifyAgent(agent, apiKey, message, externalSessionId);
+        try {
+          response = await callDifyAgent(agent, apiKey, message, externalSessionId);
+        } catch (error) {
+          // Se a conversa do Dify não existe mais, resetar e tentar novamente
+          if ((error as Error).message === 'CONVERSATION_NOT_FOUND' && externalSessionId) {
+            console.log('Dify conversation expired, creating new session...');
+            
+            // Limpar external_session_id no banco
+            if (conversation_id) {
+              await supabase
+                .from('conversations')
+                .update({ external_session_id: null })
+                .eq('id', conversation_id);
+            }
+            
+            // Tentar novamente sem conversation_id (nova sessão)
+            response = await callDifyAgent(agent, apiKey, message, '');
+            externalSessionId = ''; // Marcar como nova sessão para salvar o novo ID
+          } else {
+            throw error; // Re-lançar outros erros
+          }
+        }
         break;
       case 'crewai':
         response = await callCrewAIAgent(agent, apiKey, message);
@@ -196,6 +217,12 @@ async function callDifyAgent(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Dify API error:', response.status, errorText);
+    
+    // Se for 404 (conversa não existe), lançar erro específico
+    if (response.status === 404) {
+      throw new Error('CONVERSATION_NOT_FOUND');
+    }
+    
     throw new Error(`Dify API error: ${response.status}`);
   }
 
