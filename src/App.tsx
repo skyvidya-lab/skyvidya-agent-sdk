@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,7 +9,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useTenantRouter } from "@/hooks/useTenantRouter";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { PublicTenantRoutes } from "@/routes/PublicTenantRoutes";
-import { useMemo } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
