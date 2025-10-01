@@ -1,0 +1,144 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface ValidationRequest {
+  execution_id: string;
+  question: string;
+  expected_answer: string;
+  actual_answer: string;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { execution_id, question, expected_answer, actual_answer }: ValidationRequest = await req.json();
+
+    console.log('Validating execution:', execution_id);
+
+    // Chamar Lovable AI Gateway para validação
+    const validationPrompt = `Você é um validador de qualidade de respostas de IA.
+
+PERGUNTA: ${question}
+
+RESPOSTA ESPERADA: ${expected_answer}
+
+RESPOSTA OBTIDA: ${actual_answer}
+
+Analise as respostas e retorne um JSON com a seguinte estrutura:
+{
+  "similarity_score": <número de 0 a 100>,
+  "factual_accuracy": <número de 0 a 100>,
+  "relevance_score": <número de 0 a 100>,
+  "justification": "<explicação detalhada da avaliação>",
+  "cognitive_gaps": ["<gap1>", "<gap2>"],
+  "improvement_suggestions": ["<sugestão1>", "<sugestão2>"]
+}
+
+Critérios de avaliação:
+- similarity_score: quão similar semanticamente são as respostas
+- factual_accuracy: se os fatos estão corretos
+- relevance_score: se a resposta é relevante para a pergunta
+- cognitive_gaps: conceitos ausentes ou mal explicados
+- improvement_suggestions: como melhorar a resposta`;
+
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: 'Você é um validador especialista em qualidade de respostas de IA.' },
+          { role: 'user', content: validationPrompt }
+        ],
+        temperature: 0.3,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('AI Gateway error:', aiResponse.status, errorText);
+      throw new Error(`AI Gateway error: ${aiResponse.status}`);
+    }
+
+    const aiData = await aiResponse.json();
+    const aiContent = aiData.choices[0].message.content;
+
+    // Parse JSON response from AI
+    const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse AI response as JSON');
+    }
+
+    const validation = JSON.parse(jsonMatch[0]);
+
+    // Determinar status baseado nos scores
+    let status = 'passed';
+    const avgScore = (validation.similarity_score + validation.factual_accuracy + validation.relevance_score) / 3;
+    
+    if (avgScore < 70) {
+      status = 'failed';
+    } else if (avgScore < 85) {
+      status = 'warning';
+    }
+
+    // Atualizar execução no banco
+    const { error: updateError } = await supabase
+      .from('test_executions')
+      .update({
+        similarity_score: validation.similarity_score,
+        factual_accuracy: validation.factual_accuracy,
+        relevance_score: validation.relevance_score,
+        validation_justification: validation.justification,
+        cognitive_gaps: validation.cognitive_gaps || [],
+        improvement_suggestions: validation.improvement_suggestions || [],
+        status,
+      })
+      .eq('id', execution_id);
+
+    if (updateError) {
+      console.error('Error updating execution:', updateError);
+      throw updateError;
+    }
+
+    console.log('Validation completed successfully:', execution_id);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        validation,
+        status,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in validate-agent-response:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});
