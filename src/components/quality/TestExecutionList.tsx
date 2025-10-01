@@ -11,7 +11,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Play } from 'lucide-react';
 import { TestExecutionDetail } from './TestExecutionDetail';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -24,6 +24,10 @@ export const TestExecutionList = ({ tenantId }: TestExecutionListProps) => {
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   
   const { data: executions = [], isLoading } = useTestExecutions(tenantId);
+
+  if (!tenantId) {
+    return <div className="text-center py-8 text-muted-foreground">Selecione um tenant para visualizar o histórico de execuções</div>;
+  }
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -42,10 +46,6 @@ export const TestExecutionList = ({ tenantId }: TestExecutionListProps) => {
     return 'text-red-600 dark:text-red-400';
   };
 
-  if (!tenantId) {
-    return <div>Selecione um workspace</div>;
-  }
-
   return (
     <>
       <Card>
@@ -54,12 +54,23 @@ export const TestExecutionList = ({ tenantId }: TestExecutionListProps) => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Carregando...
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground mt-4">Carregando histórico de execuções...</p>
             </div>
           ) : executions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhuma execução encontrada
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                  <Play className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Nenhuma execução realizada</h3>
+                  <p className="text-muted-foreground">
+                    Execute casos de teste para visualizar o histórico e análise de resultados.
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (
             <Table>

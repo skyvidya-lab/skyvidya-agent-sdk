@@ -9,8 +9,36 @@ interface QualityMetricsProps {
 export const QualityMetrics = ({ tenantId }: QualityMetricsProps) => {
   const { data: metrics, isLoading } = useExecutionMetrics(tenantId);
 
-  if (isLoading || !metrics) {
-    return <div>Carregando métricas...</div>;
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="pb-2">
+              <div className="h-4 bg-muted rounded w-24"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-muted rounded w-16"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!metrics || metrics.total === 0) {
+    return (
+      <Card className="mb-6">
+        <CardContent className="py-8 text-center">
+          <div className="flex flex-col items-center gap-2">
+            <TrendingUp className="h-12 w-12 text-muted-foreground/50" />
+            <p className="text-muted-foreground">
+              Nenhuma execução ainda. Execute testes para ver as métricas de qualidade.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const metricsData = [

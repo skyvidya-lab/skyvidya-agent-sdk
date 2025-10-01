@@ -136,14 +136,16 @@ export const TestCaseForm = ({ tenantId, open, onOpenChange, testCase }: TestCas
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Agente (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    value={field.value || undefined} 
+                    onValueChange={(value) => field.onChange(value || null)}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Todos os agentes" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Todos os agentes</SelectItem>
                       {agents.map((agent) => (
                         <SelectItem key={agent.id} value={agent.id}>
                           {agent.name}

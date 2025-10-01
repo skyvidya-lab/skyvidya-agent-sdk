@@ -198,8 +198,20 @@ export const useExecutionMetrics = (workspaceId: string, agentId?: string) => {
 
       if (error) throw error;
 
-      // Calculate metrics
+      // Calculate metrics with safe division
       const total = data.length;
+      
+      if (total === 0) {
+        return {
+          total: 0,
+          avgAccuracy: 0,
+          avgSpeed: 0,
+          totalCost: 0,
+          totalTokens: 0,
+          successRate: 0,
+        };
+      }
+
       const avgAccuracy = data.reduce((sum, e) => sum + (e.similarity_score || 0), 0) / total;
       const avgSpeed = data.reduce((sum, e) => sum + (e.latency_ms || 0), 0) / total;
       const totalCost = data.reduce((sum, e) => sum + (e.cost_usd || 0), 0);

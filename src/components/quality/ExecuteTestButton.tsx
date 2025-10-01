@@ -47,8 +47,9 @@ export const ExecuteTestButton = ({ tenantId, testCaseId }: ExecuteTestButtonPro
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
+        className="gap-2"
       >
-        <Play className="h-4 w-4 mr-2" />
+        <Play className="h-3 w-3" />
         Executar
       </Button>
 

@@ -100,12 +100,28 @@ export const TestCaseList = ({ tenantId }: TestCaseListProps) => {
           </div>
 
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Carregando...
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground mt-4">Carregando casos de teste...</p>
             </div>
           ) : testCases.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum caso de teste encontrado
+            <div className="text-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                  <svg className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Nenhum caso de teste criado</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Comece criando seu primeiro caso de teste para avaliar a qualidade dos agentes.
+                  </p>
+                  <Button onClick={() => setIsFormOpen(true)} size="sm">
+                    Criar Primeiro Caso de Teste
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <Table>
