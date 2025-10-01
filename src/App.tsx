@@ -20,7 +20,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { tenant, isLoading, isPublicUI } = useTenantRouter();
+  const { tenant, isLoading } = useTenantRouter();
   
   if (isLoading) {
     return (
@@ -30,16 +30,9 @@ function AppContent() {
     );
   }
   
-  if (isPublicUI && tenant) {
-    return (
-      <TenantProvider tenant={tenant} isLoading={isLoading}>
-        <PublicTenantRoutes tenant={tenant} />
-      </TenantProvider>
-    );
-  }
-  
   return (
     <Routes>
+      {/* Rotas principais/admin */}
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={<Auth />} />
       <Route
@@ -82,6 +75,22 @@ function AppContent() {
           </ProtectedRoute>
         }
       />
+      
+      {/* Rotas de tenant - captura /:slug/* */}
+      <Route 
+        path="/:slug/*" 
+        element={
+          tenant ? (
+            <TenantProvider tenant={tenant} isLoading={false}>
+              <PublicTenantRoutes tenant={tenant} />
+            </TenantProvider>
+          ) : (
+            <NotFound />
+          )
+        } 
+      />
+      
+      {/* Catch-all para rotas não encontradas */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
