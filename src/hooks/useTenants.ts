@@ -10,7 +10,7 @@ export function useTenants() {
         .from("tenants")
         .select(`
           *,
-          tenant_config!inner (*)
+          tenant_config (*)
         `)
         .order("created_at", { ascending: false });
       
@@ -61,7 +61,8 @@ export function useCreateTenant() {
         .maybeSingle();
       return tenantResult;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await new Promise(resolve => setTimeout(resolve, 200));
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       toast.success("Tenant criado com sucesso");
     },
@@ -113,7 +114,8 @@ export function useUpdateTenant() {
         .maybeSingle();
       return tenantResult;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await new Promise(resolve => setTimeout(resolve, 200));
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
       toast.success("Tenant atualizado com sucesso");
     },
