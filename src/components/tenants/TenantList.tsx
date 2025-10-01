@@ -3,7 +3,7 @@ import { useTenants } from "@/hooks/useTenants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, ExternalLink } from "lucide-react";
 import { TenantForm } from "./TenantForm";
 
 export function TenantList() {
@@ -45,7 +45,7 @@ export function TenantList() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">Slug: {tenant.slug}</p>
                 {tenant.domain && (
                   <p className="text-sm text-muted-foreground">Domínio: {tenant.domain}</p>
@@ -53,6 +53,15 @@ export function TenantList() {
                 <Badge variant={tenant.is_active ? "default" : "secondary"}>
                   {tenant.is_active ? "Ativo" : "Inativo"}
                 </Badge>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.open(`/${tenant.slug}`, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Ver Página Pública
+                </Button>
               </div>
             </CardContent>
           </Card>
