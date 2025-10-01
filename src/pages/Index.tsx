@@ -2,7 +2,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Network, Zap, Shield, CheckCircle, TrendingUp, Settings, Link as LinkIcon, BarChart3, FileCheck, Rocket, Building2, Hospital, Scale, GraduationCap, ArrowRight, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
+
 const Index = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
   const pillars = [{
     icon: Settings,
     title: "Orquestra e Gerencia",
@@ -107,11 +119,11 @@ const Index = () => {
             <p className="mb-4 text-xl text-muted-foreground md:text-2xl">Plataforma de Orquestração de AI Agentes</p>
             <p className="mb-8 text-lg text-muted-foreground max-w-2xl mx-auto">Nossa missão é clara: democratizar a criação de plataformas de IA especializadas para qualquer organização. Pense em um maestro digital que gerencia, conecta e governa seus agentes de forma unificada e segura</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
-              <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all">
+              <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/auth')}>
                 Começar Agora
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="gap-2">
+              <Button size="lg" variant="outline" className="gap-2" onClick={() => window.open('https://github.com', '_blank')}>
                 <Network className="h-4 w-4" />
                 Ver Documentação
               </Button>
@@ -263,11 +275,11 @@ const Index = () => {
               Transforme sua organização com a SDK líder em orquestração de agentes de IA
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="gap-2 shadow-lg">
+              <Button size="lg" className="gap-2 shadow-lg" onClick={() => navigate('/auth')}>
                 Iniciar Agora
                 <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline">
+              <Button size="lg" variant="outline" onClick={() => window.open('https://github.com', '_blank')}>
                 Agendar Demo
               </Button>
             </div>
