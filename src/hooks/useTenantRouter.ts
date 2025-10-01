@@ -42,7 +42,17 @@ export function useTenantRouter() {
   const detectTenantSlug = (): string | null => {
     const path = location.pathname;
     
-    if (path.startsWith('/admin') || path === '/auth' || path === '/') {
+    // Ignorar rotas do admin e rotas principais
+    if (
+      path.startsWith('/admin') || 
+      path === '/auth' || 
+      path === '/' ||
+      path === '/dashboard' ||
+      path === '/tenants' ||
+      path === '/agents' ||
+      path === '/chat' ||
+      path === '/settings'
+    ) {
       return null;
     }
     
@@ -69,7 +79,7 @@ export function useTenantRouter() {
         `)
         .eq('slug', tenantSlug)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching tenant:', error);
