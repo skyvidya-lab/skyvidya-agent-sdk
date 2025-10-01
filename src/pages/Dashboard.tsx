@@ -1,46 +1,68 @@
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Users, MessageSquare, BarChart3, LogOut } from 'lucide-react';
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Building2, Bot, MessageSquare, Activity } from "lucide-react";
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("current_tenant_id")
+        .eq("id", user?.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["dashboard-stats", profile?.current_tenant_id],
+    queryFn: async () => {
+      const tenantId = profile?.current_tenant_id;
+      
+      const [tenantsCount, agentsCount, conversationsCount] = await Promise.all([
+        supabase.from("tenants").select("*", { count: "exact", head: true }),
+        tenantId
+          ? supabase.from("agents").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId)
+          : Promise.resolve({ count: 0 }),
+        tenantId
+          ? supabase.from("conversations").select("*", { count: "exact", head: true }).eq("tenant_id", tenantId)
+          : Promise.resolve({ count: 0 }),
+      ]);
+
+      return {
+        tenants: tenantsCount.count || 0,
+        agents: agentsCount.count || 0,
+        conversations: conversationsCount.count || 0,
+      };
+    },
+    enabled: !!user?.id,
+  });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bot className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Skyvidya Agent SDK</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Dashboard</h2>
-          <p className="text-muted-foreground">
-            Bem-vindo à plataforma de orquestração multi-tenant
-          </p>
+    <AppLayout>
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Visão geral do sistema</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Tenants</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Nenhum tenant configurado ainda</p>
+              <div className="text-2xl font-bold">{stats?.tenants || 0}</div>
             </CardContent>
           </Card>
 
@@ -50,8 +72,7 @@ export default function Dashboard() {
               <Bot className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Crie seu primeiro agente</p>
+              <div className="text-2xl font-bold">{stats?.agents || 0}</div>
             </CardContent>
           </Card>
 
@@ -61,71 +82,21 @@ export default function Dashboard() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">Nenhuma conversa ainda</p>
+              <div className="text-2xl font-bold">{stats?.conversations || 0}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Métricas</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Status</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">Dados em breve</p>
+              <div className="text-2xl font-bold text-green-500">Online</div>
             </CardContent>
           </Card>
         </div>
-
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Próximos Passos</CardTitle>
-              <CardDescription>
-                Configure sua plataforma seguindo estas etapas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                    1
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Criar seu primeiro tenant</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Configure uma organização para começar a gerenciar agentes
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                    2
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Adicionar um agente</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Conecte agentes de Dify, Langflow, CrewAI ou crie nativos
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                    3
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Iniciar conversas</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Teste seus agentes e monitore o desempenho
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
