@@ -32,16 +32,9 @@ function AppContent() {
   
   if (isPublicUI && tenant) {
     return (
-      <Routes>
-        <Route 
-          path="/:slug/*" 
-          element={
-            <TenantProvider tenant={tenant} isLoading={isLoading}>
-              <PublicTenantRoutes tenant={tenant} />
-            </TenantProvider>
-          } 
-        />
-      </Routes>
+      <TenantProvider tenant={tenant} isLoading={isLoading}>
+        <PublicTenantRoutes tenant={tenant} />
+      </TenantProvider>
     );
   }
   
