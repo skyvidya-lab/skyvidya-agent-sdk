@@ -26,10 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCreateAgent, useUpdateAgent } from "@/hooks/useAgents";
 import { useTestAgentConnection } from "@/hooks/useTestAgentConnection";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plug } from "lucide-react";
+import { Loader2, Plug, Info } from "lucide-react";
 import { useState } from "react";
 
 const agentSchema = z.object({
@@ -38,7 +44,13 @@ const agentSchema = z.object({
   platform: z.enum(["dify", "langflow", "crewai", "native"]),
   platform_agent_id: z.string().optional(),
   api_endpoint: z.string().url("URL inválida").optional().or(z.literal("")),
-  api_key_reference: z.string().optional(),
+  api_key_reference: z.string()
+    .regex(/^[A-Z][A-Z0-9_]*$/, "Use apenas MAIÚSCULAS, números e underscore (_)")
+    .refine(
+      (val) => !val || !val.match(/^(app-|sk-|[a-z0-9]{32,})/),
+      "Este parece ser uma chave de API. Use o NOME da variável de ambiente"
+    )
+    .optional(),
   model_name: z.string().optional(),
   temperature: z.number().min(0).max(1).optional(),
   max_tokens: z.number().min(100).max(4000).optional(),
@@ -237,11 +249,60 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                     name="api_key_reference"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome do Secret *</FormLabel>
+                        <div className="flex items-center gap-2">
+                          <FormLabel>Variável de Ambiente (Secret) *</FormLabel>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs bg-popover text-popover-foreground border shadow-md z-50">
+                                <div className="space-y-2 text-sm">
+                                  <p className="font-semibold">💡 Como funciona:</p>
+                                  <ol className="list-decimal list-inside space-y-1">
+                                    <li>Configure a chave da API no Lovable Cloud</li>
+                                    <li>Digite apenas o NOME da variável aqui</li>
+                                    <li>O sistema busca o valor automaticamente</li>
+                                  </ol>
+                                  <p className="text-destructive font-semibold mt-2">
+                                    ⚠️ NUNCA cole a chave da API real aqui!
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                         <FormControl>
-                          <Input placeholder="DIFY_API_KEY_TENANT_X" {...field} />
+                          <Input 
+                            placeholder={
+                              selectedPlatform === 'dify' ? 'DIFY_API_KEY_[NOME_TENANT]' :
+                              selectedPlatform === 'langflow' ? 'LANGFLOW_API_KEY_[NOME_TENANT]' :
+                              selectedPlatform === 'crewai' ? 'CREWAI_API_KEY_[NOME_TENANT]' :
+                              'NOME_DA_VARIAVEL_AMBIENTE'
+                            }
+                            {...field} 
+                          />
                         </FormControl>
-                        <FormDescription>Nome do secret configurado no Lovable Cloud</FormDescription>
+                        <FormDescription>
+                          <div className="flex flex-col gap-1">
+                            <span>Nome da variável de ambiente onde a chave da API está armazenada</span>
+                            <Button
+                              type="button"
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs justify-start"
+                              onClick={() => window.open('https://docs.lovable.dev/features/cloud#secrets-management', '_blank')}
+                            >
+                              Como configurar secrets no Lovable Cloud? →
+                            </Button>
+                          </div>
+                        </FormDescription>
+                        {field.value && (
+                          <div className="mt-2 p-2 bg-muted rounded-md text-xs font-mono flex items-center gap-2">
+                            <span className="text-muted-foreground">✓ Buscando secret:</span>
+                            <span className="text-primary font-bold">{field.value}</span>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
