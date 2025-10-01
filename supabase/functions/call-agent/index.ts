@@ -103,11 +103,29 @@ serve(async (req) => {
       throw new Error(`API key ${agent.api_key_reference} not configured in secrets`);
     }
     
+    // Buscar external_session_id da conversa
+    let externalSessionId = '';
+    if (conversation_id) {
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .select('external_session_id')
+        .eq('id', conversation_id)
+        .single();
+      
+      if (convError) {
+        console.error('Error fetching conversation:', convError);
+      } else {
+        externalSessionId = conversation?.external_session_id || '';
+      }
+      
+      console.log('External session ID:', externalSessionId || 'nova conversa');
+    }
+    
     // Route to platform-specific handler
     let response;
     switch (agent.platform) {
       case 'dify':
-        response = await callDifyAgent(agent, apiKey, message, conversation_id);
+        response = await callDifyAgent(agent, apiKey, message, externalSessionId);
         break;
       case 'crewai':
         response = await callCrewAIAgent(agent, apiKey, message);
@@ -120,6 +138,20 @@ serve(async (req) => {
     }
     
     console.log('Agent response received');
+    
+    // Se é a primeira mensagem com Dify, salvar external_session_id retornado
+    if (agent.platform === 'dify' && conversation_id && !externalSessionId && (response as any).conversation_id) {
+      const { error: updateError } = await supabase
+        .from('conversations')
+        .update({ external_session_id: (response as any).conversation_id })
+        .eq('id', conversation_id);
+      
+      if (updateError) {
+        console.error('Error updating external_session_id:', updateError);
+      } else {
+        console.log('External session ID saved:', (response as any).conversation_id);
+      }
+    }
     
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,6 +176,7 @@ async function callDifyAgent(
   conversationId?: string
 ) {
   console.log('Calling Dify agent:', agent.api_endpoint);
+  console.log('Using Dify conversation ID:', conversationId || 'empty (new conversation)');
   
   const response = await fetch(`${agent.api_endpoint}/chat-messages`, {
     method: 'POST',
