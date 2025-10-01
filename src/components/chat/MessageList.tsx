@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Message } from "./Message";
+import { MessageSkeleton } from "./MessageSkeleton";
 
 interface MessageData {
   id: string;
@@ -12,16 +13,17 @@ interface MessageData {
 
 interface MessageListProps {
   messages: MessageData[];
+  isLoading?: boolean;
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({ messages, isLoading }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   return (
     <ScrollArea className="flex-1 p-4">
@@ -29,6 +31,7 @@ export function MessageList({ messages }: MessageListProps) {
         {messages.map((msg) => (
           <Message key={msg.id} message={msg} />
         ))}
+        {isLoading && <MessageSkeleton />}
       </div>
     </ScrollArea>
   );
