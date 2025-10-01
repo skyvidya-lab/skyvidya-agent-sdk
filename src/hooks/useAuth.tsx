@@ -115,17 +115,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      toast({
-        title: 'Erro ao fazer logout',
-        description: error.message,
-        variant: 'destructive',
-      });
-      throw error;
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      // Ignorar erro de sessão não encontrada
+      if (error && error.message !== 'Auth session missing!') {
+        toast({
+          title: 'Erro ao fazer logout',
+          description: error.message,
+          variant: 'destructive',
+        });
+        throw error;
+      }
+    } catch (error: any) {
+      // Se for erro de sessão, apenas continuar
+      if (!error.message?.includes('session')) {
+        throw error;
+      }
     }
-
+    
+    // Sempre limpar estado e redirecionar
     toast({
       title: 'Logout realizado',
       description: 'Até breve!',
