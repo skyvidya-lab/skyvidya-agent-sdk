@@ -161,6 +161,104 @@ export type Database = {
           },
         ]
       }
+      benchmarks: {
+        Row: {
+          agent_ids: string[]
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          results: Json | null
+          test_case_ids: string[]
+          workspace_id: string
+        }
+        Insert: {
+          agent_ids?: string[]
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          results?: Json | null
+          test_case_ids?: string[]
+          workspace_id: string
+        }
+        Update: {
+          agent_ids?: string[]
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          results?: Json | null
+          test_case_ids?: string[]
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benchmarks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cognitive_insights: {
+        Row: {
+          agent_id: string | null
+          description: string
+          evidence: Json | null
+          generated_at: string | null
+          id: string
+          insight_type: string
+          recommendations: string[] | null
+          severity: string
+          title: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          description: string
+          evidence?: Json | null
+          generated_at?: string | null
+          id?: string
+          insight_type: string
+          recommendations?: string[] | null
+          severity: string
+          title: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          description?: string
+          evidence?: Json | null
+          generated_at?: string | null
+          id?: string
+          insight_type?: string
+          recommendations?: string[] | null
+          severity?: string
+          title?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cognitive_insights_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_insights_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           agent_id: string
@@ -540,6 +638,154 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      test_cases: {
+        Row: {
+          agent_id: string | null
+          category: string
+          created_at: string | null
+          created_by: string | null
+          expected_answer: string
+          expected_score_min: number | null
+          id: string
+          is_active: boolean | null
+          question: string
+          tags: string[] | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          expected_answer: string
+          expected_score_min?: number | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          tags?: string[] | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          expected_answer?: string
+          expected_score_min?: number | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_cases_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_executions: {
+        Row: {
+          actual_answer: string | null
+          agent_id: string
+          cognitive_gaps: Json | null
+          cost_usd: number | null
+          executed_at: string | null
+          executed_by: string | null
+          expected_answer: string
+          factual_accuracy: number | null
+          id: string
+          improvement_suggestions: Json | null
+          latency_ms: number | null
+          question_asked: string
+          relevance_score: number | null
+          similarity_score: number | null
+          status: string | null
+          test_case_id: string
+          tokens_used: number | null
+          validation_justification: string | null
+          workspace_id: string
+        }
+        Insert: {
+          actual_answer?: string | null
+          agent_id: string
+          cognitive_gaps?: Json | null
+          cost_usd?: number | null
+          executed_at?: string | null
+          executed_by?: string | null
+          expected_answer: string
+          factual_accuracy?: number | null
+          id?: string
+          improvement_suggestions?: Json | null
+          latency_ms?: number | null
+          question_asked: string
+          relevance_score?: number | null
+          similarity_score?: number | null
+          status?: string | null
+          test_case_id: string
+          tokens_used?: number | null
+          validation_justification?: string | null
+          workspace_id: string
+        }
+        Update: {
+          actual_answer?: string | null
+          agent_id?: string
+          cognitive_gaps?: Json | null
+          cost_usd?: number | null
+          executed_at?: string | null
+          executed_by?: string | null
+          expected_answer?: string
+          factual_accuracy?: number | null
+          id?: string
+          improvement_suggestions?: Json | null
+          latency_ms?: number | null
+          question_asked?: string
+          relevance_score?: number | null
+          similarity_score?: number | null
+          status?: string | null
+          test_case_id?: string
+          tokens_used?: number | null
+          validation_justification?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_executions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_executions_test_case_id_fkey"
+            columns: ["test_case_id"]
+            isOneToOne: false
+            referencedRelation: "test_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_executions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
