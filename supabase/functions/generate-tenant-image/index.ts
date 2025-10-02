@@ -33,9 +33,9 @@ serve(async (req) => {
     console.log(`Generating ${imageType} for ${context} (${identifier}) with prompt:`, prompt);
 
     // Use Google Gemini API directly
-    const geminiApiKey = Deno.env.get('GOOGLE_API_KEY') || Deno.env.get('GEMINI_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
     if (!geminiApiKey) {
-      throw new Error('GOOGLE_API_KEY or GEMINI_API_KEY not configured');
+      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
 
     const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
