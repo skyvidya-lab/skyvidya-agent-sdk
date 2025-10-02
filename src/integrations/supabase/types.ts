@@ -87,6 +87,63 @@ export type Database = {
           },
         ]
       }
+      agent_improvements: {
+        Row: {
+          after_value: string | null
+          agent_id: string
+          applied_at: string | null
+          applied_by: string | null
+          before_value: string | null
+          evidence: Json | null
+          id: string
+          impact_metrics: Json | null
+          improvement_type: string
+          reason: string | null
+          workspace_id: string
+        }
+        Insert: {
+          after_value?: string | null
+          agent_id: string
+          applied_at?: string | null
+          applied_by?: string | null
+          before_value?: string | null
+          evidence?: Json | null
+          id?: string
+          impact_metrics?: Json | null
+          improvement_type: string
+          reason?: string | null
+          workspace_id: string
+        }
+        Update: {
+          after_value?: string | null
+          agent_id?: string
+          applied_at?: string | null
+          applied_by?: string | null
+          before_value?: string | null
+          evidence?: Json | null
+          id?: string
+          impact_metrics?: Json | null
+          improvement_type?: string
+          reason?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_improvements_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_improvements_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           api_endpoint: string | null
@@ -98,16 +155,20 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          knowledge_base: string | null
           max_tokens: number | null
           model_name: string | null
           name: string
+          parent_version_id: string | null
           platform: Database["public"]["Enums"]["agent_platform"]
           platform_agent_id: string
           status: Database["public"]["Enums"]["agent_status"] | null
           system_prompt: string | null
           temperature: number | null
           tenant_id: string
+          training_examples: Json | null
           updated_at: string | null
+          version: number | null
         }
         Insert: {
           api_endpoint?: string | null
@@ -119,16 +180,20 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          knowledge_base?: string | null
           max_tokens?: number | null
           model_name?: string | null
           name: string
+          parent_version_id?: string | null
           platform: Database["public"]["Enums"]["agent_platform"]
           platform_agent_id: string
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           temperature?: number | null
           tenant_id: string
+          training_examples?: Json | null
           updated_at?: string | null
+          version?: number | null
         }
         Update: {
           api_endpoint?: string | null
@@ -140,21 +205,105 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          knowledge_base?: string | null
           max_tokens?: number | null
           model_name?: string | null
           name?: string
+          parent_version_id?: string | null
           platform?: Database["public"]["Enums"]["agent_platform"]
           platform_agent_id?: string
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           temperature?: number | null
           tenant_id?: string
+          training_examples?: Json | null
           updated_at?: string | null
+          version?: number | null
         }
         Relationships: [
           {
+            foreignKeyName: "agents_parent_version_id_fkey"
+            columns: ["parent_version_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "agents_tenant_id_fkey"
             columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agreement_analysis: {
+        Row: {
+          agent_ids: string[]
+          benchmark_id: string | null
+          consensus_category: string | null
+          created_at: string | null
+          disagreement_level: string | null
+          evidence: Json | null
+          human_review_completed: boolean | null
+          human_review_notes: string | null
+          id: string
+          interpretation: string | null
+          kappa_score: number | null
+          requires_human_review: boolean | null
+          test_case_id: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_ids: string[]
+          benchmark_id?: string | null
+          consensus_category?: string | null
+          created_at?: string | null
+          disagreement_level?: string | null
+          evidence?: Json | null
+          human_review_completed?: boolean | null
+          human_review_notes?: string | null
+          id?: string
+          interpretation?: string | null
+          kappa_score?: number | null
+          requires_human_review?: boolean | null
+          test_case_id: string
+          workspace_id: string
+        }
+        Update: {
+          agent_ids?: string[]
+          benchmark_id?: string | null
+          consensus_category?: string | null
+          created_at?: string | null
+          disagreement_level?: string | null
+          evidence?: Json | null
+          human_review_completed?: boolean | null
+          human_review_notes?: string | null
+          id?: string
+          interpretation?: string | null
+          kappa_score?: number | null
+          requires_human_review?: boolean | null
+          test_case_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_analysis_benchmark_id_fkey"
+            columns: ["benchmark_id"]
+            isOneToOne: false
+            referencedRelation: "benchmarks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_analysis_test_case_id_fkey"
+            columns: ["test_case_id"]
+            isOneToOne: false
+            referencedRelation: "test_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_analysis_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
@@ -643,8 +792,10 @@ export type Database = {
         Row: {
           agent_id: string | null
           category: string
+          context: string | null
           created_at: string | null
           created_by: string | null
+          difficulty: string | null
           expected_answer: string
           expected_score_min: number | null
           id: string
@@ -657,8 +808,10 @@ export type Database = {
         Insert: {
           agent_id?: string | null
           category: string
+          context?: string | null
           created_at?: string | null
           created_by?: string | null
+          difficulty?: string | null
           expected_answer: string
           expected_score_min?: number | null
           id?: string
@@ -671,8 +824,10 @@ export type Database = {
         Update: {
           agent_id?: string | null
           category?: string
+          context?: string | null
           created_at?: string | null
           created_by?: string | null
+          difficulty?: string | null
           expected_answer?: string
           expected_score_min?: number | null
           id?: string
@@ -703,12 +858,14 @@ export type Database = {
         Row: {
           actual_answer: string | null
           agent_id: string
+          cognitive_analysis: Json | null
           cognitive_gaps: Json | null
           cost_usd: number | null
           executed_at: string | null
           executed_by: string | null
           expected_answer: string
           factual_accuracy: number | null
+          guardrail_results: Json | null
           id: string
           improvement_suggestions: Json | null
           latency_ms: number | null
@@ -724,12 +881,14 @@ export type Database = {
         Insert: {
           actual_answer?: string | null
           agent_id: string
+          cognitive_analysis?: Json | null
           cognitive_gaps?: Json | null
           cost_usd?: number | null
           executed_at?: string | null
           executed_by?: string | null
           expected_answer: string
           factual_accuracy?: number | null
+          guardrail_results?: Json | null
           id?: string
           improvement_suggestions?: Json | null
           latency_ms?: number | null
@@ -745,12 +904,14 @@ export type Database = {
         Update: {
           actual_answer?: string | null
           agent_id?: string
+          cognitive_analysis?: Json | null
           cognitive_gaps?: Json | null
           cost_usd?: number | null
           executed_at?: string | null
           executed_by?: string | null
           expected_answer?: string
           factual_accuracy?: number | null
+          guardrail_results?: Json | null
           id?: string
           improvement_suggestions?: Json | null
           latency_ms?: number | null

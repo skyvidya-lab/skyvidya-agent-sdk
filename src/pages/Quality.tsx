@@ -6,9 +6,12 @@ import { TestCaseList } from "@/components/quality/TestCaseList";
 import { TestExecutionList } from "@/components/quality/TestExecutionList";
 import { QualityMetrics } from "@/components/quality/QualityMetrics";
 import { Button } from "@/components/ui/button";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, Upload, Play, Target } from "lucide-react";
 import { useState } from "react";
 import { TestCaseForm } from "@/components/quality/TestCaseForm";
+import { ImportTestCasesDialog } from "@/components/quality/ImportTestCasesDialog";
+import { BatchExecutionDialog } from "@/components/quality/BatchExecutionDialog";
+import { AgreementDashboard } from "@/components/quality/AgreementDashboard";
 import { useExportTestCases, useTestCases } from "@/hooks/useTestCases";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +21,8 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Quality() {
   const { user } = useAuth();
   const [showNewTestCase, setShowNewTestCase] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [showBatchExecution, setShowBatchExecution] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -68,6 +73,7 @@ export default function Quality() {
             <TabsList>
               <TabsTrigger value="test-cases">Casos de Teste</TabsTrigger>
               <TabsTrigger value="executions">Histórico de Execuções</TabsTrigger>
+              <TabsTrigger value="agreement">Concordância (Kappa)</TabsTrigger>
             </TabsList>
 
             <TabsContent value="test-cases" className="space-y-4 animate-fade-in">
@@ -83,7 +89,15 @@ export default function Quality() {
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={handleExport} className="hover:bg-primary/10">
                         <FileDown className="h-4 w-4 mr-2" />
-                        Exportar CSV
+                        Exportar
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowImport(true)} className="hover:bg-primary/10">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Importar CSV
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowBatchExecution(true)} className="hover:bg-primary/10">
+                        <Play className="h-4 w-4 mr-2" />
+                        Executar Lote
                       </Button>
                       <Button size="sm" onClick={() => setShowNewTestCase(true)} className="shadow-lg">
                         <Plus className="h-4 w-4 mr-2" />
@@ -117,7 +131,36 @@ export default function Quality() {
                 </CardContent>
               </GlassCard>
             </TabsContent>
+
+            <TabsContent value="agreement" className="space-y-4 animate-fade-in">
+              <GlassCard>
+                <CardHeader>
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <Target className="h-6 w-6" />
+                    Análise de Concordância (Kappa)
+                  </CardTitle>
+                  <CardDescription className="text-base mt-1">
+                    Revisão por pares automatizada entre agentes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AgreementDashboard workspaceId={profile.current_tenant_id} />
+                </CardContent>
+              </GlassCard>
+            </TabsContent>
           </Tabs>
+
+          <ImportTestCasesDialog
+            workspaceId={profile.current_tenant_id}
+            open={showImport}
+            onOpenChange={setShowImport}
+          />
+
+          <BatchExecutionDialog
+            workspaceId={profile.current_tenant_id}
+            open={showBatchExecution}
+            onOpenChange={setShowBatchExecution}
+          />
         </div>
       ) : (
         <div className="flex items-center justify-center h-full p-6">

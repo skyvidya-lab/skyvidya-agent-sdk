@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Building2, Bot, MessageSquare, Settings, LogOut, Activity, FlaskConical } from "lucide-react";
+import { LayoutDashboard, Building2, Bot, MessageSquare, Settings, LogOut, Activity, FlaskConical, Target } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +28,7 @@ const items = [
   { title: "Agentes", url: "/agents", icon: Bot },
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Qualidade", url: "/quality", icon: FlaskConical },
+  { title: "Benchmarks", url: "/benchmarks", icon: Target },
   { title: "Logs", url: "/logs", icon: Activity },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];

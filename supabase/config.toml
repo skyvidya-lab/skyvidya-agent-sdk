@@ -8,3 +8,9 @@ verify_jwt = true
 
 [functions.generate-cognitive-insights]
 verify_jwt = true
+
+[functions.batch-execute-tests]
+verify_jwt = true
+
+[functions.calculate-agreement]
+verify_jwt = true
