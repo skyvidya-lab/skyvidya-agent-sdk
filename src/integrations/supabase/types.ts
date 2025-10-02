@@ -310,6 +310,71 @@ export type Database = {
           },
         ]
       }
+      batch_executions: {
+        Row: {
+          agent_ids: string[]
+          completed_at: string | null
+          completed_tests: number | null
+          created_at: string | null
+          created_by: string | null
+          error_log: Json | null
+          estimated_completion: string | null
+          execution_ids: string[] | null
+          failed_tests: number | null
+          id: string
+          started_at: string | null
+          status: string
+          successful_tests: number | null
+          test_case_ids: string[]
+          total_tests: number
+          workspace_id: string
+        }
+        Insert: {
+          agent_ids: string[]
+          completed_at?: string | null
+          completed_tests?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          error_log?: Json | null
+          estimated_completion?: string | null
+          execution_ids?: string[] | null
+          failed_tests?: number | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          successful_tests?: number | null
+          test_case_ids: string[]
+          total_tests: number
+          workspace_id: string
+        }
+        Update: {
+          agent_ids?: string[]
+          completed_at?: string | null
+          completed_tests?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          error_log?: Json | null
+          estimated_completion?: string | null
+          execution_ids?: string[] | null
+          failed_tests?: number | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          successful_tests?: number | null
+          test_case_ids?: string[]
+          total_tests?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_executions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       benchmarks: {
         Row: {
           agent_ids: string[]

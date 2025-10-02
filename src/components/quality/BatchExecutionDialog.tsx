@@ -11,6 +11,7 @@ import { useAgents } from '@/hooks/useAgents';
 import { useTestCases } from '@/hooks/useTestCases';
 import { useBatchExecution } from '@/hooks/useBatchExecution';
 import { Checkbox } from '@/components/ui/checkbox';
+import { BatchProgressDialog } from './BatchProgressDialog';
 
 interface BatchExecutionDialogProps {
   workspaceId: string;
@@ -24,6 +25,7 @@ export const BatchExecutionDialog = ({ workspaceId, open, onOpenChange }: BatchE
   const [randomCount, setRandomCount] = useState<number>(10);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  const [batchId, setBatchId] = useState<string | null>(null);
 
   const { data: agents = [] } = useAgents(workspaceId);
   const { data: testCases = [] } = useTestCases(workspaceId);
@@ -57,14 +59,15 @@ export const BatchExecutionDialog = ({ workspaceId, open, onOpenChange }: BatchE
       return;
     }
 
-    await batchExecution.mutateAsync({
+    const result = await batchExecution.mutateAsync({
       workspaceId,
       agentIds: selectedAgents,
       testCaseIds: selectedTests.map(tc => tc.id),
       concurrency: 3,
     });
 
-    onOpenChange(false);
+    // Set batch ID to open progress dialog
+    setBatchId(result.batchId);
   };
 
   const toggleAgent = (agentId: string) => {
@@ -78,7 +81,8 @@ export const BatchExecutionDialog = ({ workspaceId, open, onOpenChange }: BatchE
   const selectedTestsCount = getSelectedTestCases().length;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open && !batchId} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Execução em Lote</DialogTitle>
@@ -211,7 +215,19 @@ export const BatchExecutionDialog = ({ workspaceId, open, onOpenChange }: BatchE
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <BatchProgressDialog 
+        batchId={batchId}
+        open={!!batchId}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setBatchId(null);
+            onOpenChange(false);
+          }
+        }}
+      />
+    </>
   );
 };
