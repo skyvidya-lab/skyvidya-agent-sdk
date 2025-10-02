@@ -19,10 +19,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -82,30 +82,36 @@ Foque em:
 
 Seja específico e acionável.`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const systemContent = 'Você é um analista especialista em IA que identifica padrões e gera insights acionáveis.';
+    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + geminiApiKey, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'Você é um analista especialista em IA que identifica padrões e gera insights acionáveis.' },
-          { role: 'user', content: analysisPrompt }
-        ],
-        temperature: 0.4,
+        contents: [{
+          parts: [{
+            text: `${systemContent}\n\n${analysisPrompt}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 2000,
+        },
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI Gateway error:', aiResponse.status, errorText);
-      throw new Error(`AI Gateway error: ${aiResponse.status}`);
+      console.error('Gemini API error:', aiResponse.status, errorText);
+      if (aiResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      throw new Error(`Gemini API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices[0].message.content;
+    const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     // Parse JSON response from AI
     const jsonMatch = aiContent.match(/\[[\s\S]*\]/);

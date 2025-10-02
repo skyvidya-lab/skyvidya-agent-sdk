@@ -22,10 +22,10 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -219,32 +219,36 @@ Retorne APENAS um JSON válido neste formato:
 }`;
       }
 
-      // Call Lovable AI
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      // Call Google Gemini API
+      const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + geminiApiKey, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 4000,
+          contents: [{
+            parts: [{
+              text: `${systemPrompt}\n\n${userPrompt}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4000,
+          },
         }),
       });
 
       if (!aiResponse.ok) {
         const errorText = await aiResponse.text();
-        console.error(`[generate-improvement-report] AI API error: ${aiResponse.status} ${errorText}`);
-        throw new Error(`AI API error: ${aiResponse.status}`);
+        console.error(`[generate-improvement-report] Gemini API error: ${aiResponse.status} ${errorText}`);
+        if (aiResponse.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        }
+        throw new Error(`Gemini API error: ${aiResponse.status}`);
       }
 
       const aiData = await aiResponse.json();
-      const content = aiData.choices?.[0]?.message?.content;
+      const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!content) {
         throw new Error('No content from AI');
