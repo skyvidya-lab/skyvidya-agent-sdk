@@ -527,6 +527,99 @@ export type Database = {
           },
         ]
       }
+      improvement_reports: {
+        Row: {
+          agent_id: string
+          analysis_period_end: string | null
+          analysis_period_start: string | null
+          applied: boolean | null
+          applied_at: string | null
+          applied_by: string | null
+          failed_executions_analyzed: number
+          full_report: Json
+          generated_at: string
+          generated_by: string | null
+          human_edited: boolean | null
+          id: string
+          min_score_threshold: number | null
+          original_recommendations: Json | null
+          recommendations: Json
+          report_type: string
+          review_notes: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          summary: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          agent_id: string
+          analysis_period_end?: string | null
+          analysis_period_start?: string | null
+          applied?: boolean | null
+          applied_at?: string | null
+          applied_by?: string | null
+          failed_executions_analyzed: number
+          full_report?: Json
+          generated_at?: string
+          generated_by?: string | null
+          human_edited?: boolean | null
+          id?: string
+          min_score_threshold?: number | null
+          original_recommendations?: Json | null
+          recommendations?: Json
+          report_type: string
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          summary?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string
+          analysis_period_end?: string | null
+          analysis_period_start?: string | null
+          applied?: boolean | null
+          applied_at?: string | null
+          applied_by?: string | null
+          failed_executions_analyzed?: number
+          full_report?: Json
+          generated_at?: string
+          generated_by?: string | null
+          human_edited?: boolean | null
+          id?: string
+          min_score_threshold?: number | null
+          original_recommendations?: Json | null
+          recommendations?: Json
+          report_type?: string
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          summary?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "improvement_reports_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "improvement_reports_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       logs: {
         Row: {
           context: Json | null
