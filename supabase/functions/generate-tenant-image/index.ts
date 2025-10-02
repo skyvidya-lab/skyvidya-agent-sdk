@@ -12,16 +12,24 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, imageType, tenantId } = await req.json();
+    const { prompt, imageType, tenantId, context = 'tenant' } = await req.json();
     
-    if (!prompt || !imageType || !tenantId) {
+    if (!prompt || !imageType) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: prompt, imageType, tenantId' }),
+        JSON.stringify({ error: 'Missing required fields: prompt, imageType' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Generating ${imageType} for tenant ${tenantId} with prompt:`, prompt);
+    const identifier = context === 'platform' ? 'platform' : tenantId;
+    if (!identifier) {
+      return new Response(
+        JSON.stringify({ error: 'Missing identifier (tenantId for tenant context or use platform context)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Generating ${imageType} for ${context} (${identifier}) with prompt:`, prompt);
 
     // Call Lovable AI Gateway with Gemini Nano Banana
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -80,11 +88,11 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Determine bucket based on image type
+    // Determine bucket based on image type and context
     const bucket = imageType === 'background' ? 'tenant-backgrounds' : 'tenant-logos';
-    const fileName = `${tenantId}-${imageType}-${Date.now()}.png`;
+    const fileName = `${identifier}-${imageType}-${Date.now()}.png`;
 
-    console.log(`Uploading to bucket: ${bucket}, file: ${fileName}`);
+    console.log(`Uploading to bucket: ${bucket}, file: ${fileName}, context: ${context}`);
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage

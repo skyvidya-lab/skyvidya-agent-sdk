@@ -7,6 +7,7 @@ interface GenerateImageParams {
   prompt: string;
   imageType: ImageType;
   tenantId: string;
+  context?: 'tenant' | 'platform';
 }
 
 interface GenerateImageResponse {
@@ -17,9 +18,9 @@ interface GenerateImageResponse {
 
 export const useGenerateTenantImage = () => {
   return useMutation({
-    mutationFn: async ({ prompt, imageType, tenantId }: GenerateImageParams): Promise<GenerateImageResponse> => {
+    mutationFn: async ({ prompt, imageType, tenantId, context = 'tenant' }: GenerateImageParams): Promise<GenerateImageResponse> => {
       const { data, error } = await supabase.functions.invoke('generate-tenant-image', {
-        body: { prompt, imageType, tenantId }
+        body: { prompt, imageType, tenantId, context }
       });
 
       if (error) {

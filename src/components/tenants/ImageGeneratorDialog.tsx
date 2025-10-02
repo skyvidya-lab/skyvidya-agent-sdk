@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, RefreshCw, Download } from "lucide-react";
 import {
   Dialog,
@@ -12,6 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useGenerateTenantImage } from "@/hooks/useGenerateTenantImage";
 import { getTemplatesByType, type ImageType, type PromptTemplate } from "@/lib/imagePromptTemplates";
+import { 
+  platformLogoTemplates, 
+  platformBackgroundTemplates 
+} from "@/lib/platformImagePrompts";
 import { toast } from "sonner";
 
 interface ImageGeneratorDialogProps {
@@ -20,6 +24,7 @@ interface ImageGeneratorDialogProps {
   imageType: ImageType;
   tenantId: string;
   onImageGenerated: (url: string) => void;
+  isPlatformContext?: boolean;
 }
 
 export function ImageGeneratorDialog({
@@ -28,12 +33,24 @@ export function ImageGeneratorDialog({
   imageType,
   tenantId,
   onImageGenerated,
+  isPlatformContext = false,
 }: ImageGeneratorDialogProps) {
   const [prompt, setPrompt] = useState("");
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const generateImage = useGenerateTenantImage();
 
-  const templates = getTemplatesByType(imageType);
+  // Get templates based on context
+  const templates = isPlatformContext 
+    ? (imageType === 'logo' ? platformLogoTemplates : platformBackgroundTemplates)
+    : getTemplatesByType(imageType);
+
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setPrompt("");
+      setGeneratedImageUrl(null);
+    }
+  }, [open]);
 
   const handleGenerate = () => {
     if (!prompt.trim()) {
@@ -42,7 +59,12 @@ export function ImageGeneratorDialog({
     }
 
     generateImage.mutate(
-      { prompt, imageType, tenantId },
+      { 
+        prompt, 
+        imageType, 
+        tenantId, 
+        context: isPlatformContext ? 'platform' : 'tenant' 
+      },
       {
         onSuccess: (data) => {
           setGeneratedImageUrl(data.url);
@@ -71,16 +93,18 @@ export function ImageGeneratorDialog({
   const imageTypeLabel = imageType === 'logo' ? 'Logo' : 
                          imageType === 'background' ? 'Background' : 'Favicon';
 
+  const contextLabel = isPlatformContext ? 'Skyvidya Agent SDK' : 'Tenant';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Gerar {imageTypeLabel} com IA
+            Gerar {imageTypeLabel} - {contextLabel}
           </DialogTitle>
           <DialogDescription>
-            Use Gemini Nano Banana (GRATUITO até 6 de outubro de 2025) para criar sua identidade visual
+            Use Gemini Nano Banana (GRATUITO até 6 de outubro de 2025) para criar {isPlatformContext ? 'a identidade da plataforma' : 'a identidade visual do tenant'}
           </DialogDescription>
         </DialogHeader>
 

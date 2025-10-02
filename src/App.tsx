@@ -16,6 +16,7 @@ import Tenants from "./pages/Tenants";
 import Agents from "./pages/Agents";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
+import PlatformSettings from "./pages/PlatformSettings";
 import Logs from "./pages/Logs";
 import Quality from "./pages/Quality";
 import Benchmarks from "./pages/Benchmarks";
@@ -75,6 +76,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/platform-settings"
+        element={
+          <ProtectedRoute>
+            <PlatformSettings />
           </ProtectedRoute>
         }
       />
