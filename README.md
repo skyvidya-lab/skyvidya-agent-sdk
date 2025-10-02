@@ -135,6 +135,44 @@ const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/adapt
 - **Audit Trails**: Registro imutável de todas as ações (quem, quando, o quê, por quê)
 - **A/B Testing Framework**: Experimentação controlada de prompts, modelos e fluxos
 
+**Exemplo de Validação com Lovable AI Gateway:**
+
+```typescript
+// Edge Function: validate-agent-response
+import { createClient } from '@supabase/supabase-js';
+
+const validateResponse = async (response: string, question: string) => {
+  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+  
+  const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${lovableApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash', // FREE até 6 de outubro de 2025
+      messages: [{
+        role: 'system',
+        content: `Valide a resposta de IA nos critérios:
+1. Factuality (0-100): Contém fatos verdadeiros?
+2. Safety (0-100): É segura e não prejudicial?
+3. Relevance (0-100): É relevante ao contexto?
+
+Retorne JSON: {"factuality": X, "safety": Y, "relevance": Z, "issues": [...]}`
+      }, {
+        role: 'user',
+        content: `Pergunta: ${question}\n\nResposta: ${response}`
+      }],
+      response_format: { type: "json_object" } // Garante JSON válido
+    })
+  });
+  
+  const data = await aiResponse.json();
+  return JSON.parse(data.choices[0].message.content);
+};
+```
+
 **RLS Policies**:
 
 ```sql
@@ -261,10 +299,14 @@ interface TenantBranding {
 
 ### Integrações
 
-- **Lovable AI Gateway**: Gemini 2.5 (Flash/Pro), GPT-5 (Standard/Mini/Nano)
-- **Agent Platforms**: Dify, Langflow, CrewAI, n8n
-- **Observability**: Logs estruturados, métricas customizadas
-- **Compliance**: Audit logs, data retention policies
+- **Lovable AI Gateway** ⭐ **GRATUITO até 6 de outubro de 2025**:
+  - Modelos Gemini 2.5 (Flash/Pro/Flash-Lite) - Structured JSON outputs nativos
+  - Modelos GPT-5 (Standard/Mini/Nano) - Alta precisão
+  - Sem necessidade de API keys externas (Google/OpenAI)
+  - Rate limiting gerenciado automaticamente
+- **Agent Platforms**: Dify, Langflow, CrewAI, n8n (adaptadores universais)
+- **Observability**: Logs estruturados, métricas em tempo real, alertas proativos
+- **Compliance**: Audit logs imutáveis, GDPR/HIPAA/SOX templates
 
 ---
 

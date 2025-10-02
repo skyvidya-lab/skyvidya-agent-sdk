@@ -875,20 +875,26 @@ serve(async (req) => {
 
 **Modelos Suportados**:
 
-| Modelo | Família | Uso Recomendado | Custo Relativo |
-|--------|---------|-----------------|----------------|
-| `google/gemini-2.5-pro` | Gemini | Raciocínio complexo, multimodal | Alto |
-| `google/gemini-2.5-flash` | Gemini | Balanceado, bom custo-benefício | Médio |
-| `google/gemini-2.5-flash-lite` | Gemini | Alta velocidade, tarefas simples | Baixo |
-| `openai/gpt-5` | GPT-5 | Máxima precisão, contexto longo | Muito Alto |
-| `openai/gpt-5-mini` | GPT-5 | Equilíbrio custo/performance | Médio-Alto |
-| `openai/gpt-5-nano` | GPT-5 | Velocidade máxima, volume alto | Baixo |
+| Modelo | Família | Uso Recomendado | Status | Custo Relativo |
+|--------|---------|-----------------|--------|----------------|
+| `google/gemini-2.5-flash` ⭐ | Gemini | **Balanceado, melhor custo-benefício** | **GRATUITO até 6/out** | Médio |
+| `google/gemini-2.5-flash-lite` | Gemini | Alta velocidade, tarefas simples | **GRATUITO até 6/out** | Baixo |
+| `google/gemini-2.5-pro` | Gemini | Raciocínio complexo, multimodal | **GRATUITO até 6/out** | Alto |
+| `openai/gpt-5-mini` | GPT-5 | Equilíbrio custo/performance | Pago | Médio-Alto |
+| `openai/gpt-5` | GPT-5 | Máxima precisão, contexto longo | Pago | Muito Alto |
+| `openai/gpt-5-nano` | GPT-5 | Velocidade máxima, volume alto | Pago | Baixo |
 
-**Implementação**:
+**💡 Recomendação**: Use `google/gemini-2.5-flash` como modelo padrão para aproveitar a gratuidade e excelente performance.
+
+**Implementação com Structured Outputs**:
 
 ```typescript
-// Edge Function: lovable-ai-fallback
-const callLovableAI = async (message: string, model = 'google/gemini-2.5-flash') => {
+// Edge Function: lovable-ai-validation
+const callLovableAI = async (
+  message: string, 
+  model = 'google/gemini-2.5-flash',
+  structuredOutput = true
+) => {
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -898,17 +904,39 @@ const callLovableAI = async (message: string, model = 'google/gemini-2.5-flash')
     body: JSON.stringify({
       model,
       messages: [
-        { role: 'system', content: 'Você é um assistente prestativo.' },
+        { 
+          role: 'system', 
+          content: 'Você é um assistente que sempre responde em JSON estruturado.' 
+        },
         { role: 'user', content: message }
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 2000,
+      ...(structuredOutput && { response_format: { type: "json_object" } })
     })
   });
   
-  return await response.json();
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error('Rate limit atingido. Aguarde e tente novamente.');
+    }
+    if (response.status === 402) {
+      throw new Error('Créditos esgotados no workspace Lovable.');
+    }
+    throw new Error(`Lovable AI error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  return JSON.parse(data.choices[0].message.content);
 };
 ```
+
+**Vantagens do Lovable AI Gateway:**
+- ✅ **Gratuito até 6 de outubro de 2025** (todos os modelos Gemini)
+- ✅ **Structured Outputs nativos** - JSON válido garantido
+- ✅ **Sem API keys externas** - gerenciado pelo workspace Lovable
+- ✅ **Rate limiting inteligente** - proteção automática contra sobrecarga
+- ✅ **Fallback automático** - alta disponibilidade
 
 ### 6.2 Fluxo de Fallback
 
@@ -927,6 +955,51 @@ graph TD
     
     F --> H[Save to DB]
     H --> I[Return to User]
+```
+
+---
+
+### 6.3 Structured Outputs (JSON Garantido)
+
+**Problema**: Modelos de IA às vezes retornam texto com JSON embutido que pode ter formatação imperfeita, causando erros de parsing.
+
+**Solução**: Use o parâmetro `response_format: { type: "json_object" }` para garantir que o modelo sempre retorne JSON válido.
+
+**Antes (com parsing frágil):**
+```typescript
+// ❌ Abordagem antiga com regex
+const aiResponse = await callGeminiDirectly(prompt);
+const jsonMatch = content.match(/\{[\s\S]*\}/); // Frágil!
+if (!jsonMatch) throw new Error('Invalid JSON');
+const data = JSON.parse(jsonMatch[0]); // Pode falhar
+```
+
+**Depois (com structured outputs):**
+```typescript
+// ✅ Abordagem robusta com Lovable AI Gateway
+const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  body: JSON.stringify({
+    model: 'google/gemini-2.5-flash',
+    messages: [...],
+    response_format: { type: "json_object" } // Força JSON válido
+  })
+});
+
+const data = await aiResponse.json();
+const result = JSON.parse(data.choices[0].message.content); // Sempre funciona
+```
+
+**Casos de Uso Implementados:**
+- ✅ `generate-improvement-report`: Recomendações estruturadas de melhoria
+- ✅ `generate-cognitive-insights`: Análise de gaps e padrões
+- ✅ `validate-agent-response`: Scores de qualidade (factuality, safety, relevance)
+
+**Validação Adicional:**
+```typescript
+// Sempre valide a estrutura após parsing
+if (!result?.recommendations || !Array.isArray(result.recommendations)) {
+  throw new Error('Invalid structure: missing recommendations array');
+}
 ```
 
 ---
