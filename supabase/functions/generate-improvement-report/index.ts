@@ -231,10 +231,34 @@ Retorne APENAS um JSON válido neste formato:
               text: `${systemPrompt}\n\n${userPrompt}`
             }]
           }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 4000,
-          },
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 4000,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object",
+            properties: {
+              summary: { type: "string" },
+              recommendations: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    type: { type: "string" },
+                    priority: { type: "string" },
+                    category: { type: "string" },
+                    issue: { type: "string" },
+                    suggested_addition: { type: "string" },
+                    rationale: { type: "string" },
+                    evidence: { type: "array", items: { type: "string" } }
+                  },
+                  required: ["type", "priority", "category", "issue", "suggested_addition", "rationale"]
+                }
+              }
+            },
+            required: ["summary", "recommendations"]
+          }
+        },
         }),
       });
 
@@ -254,14 +278,24 @@ Retorne APENAS um JSON válido neste formato:
         throw new Error('No content from AI');
       }
 
-      // Parse JSON from AI response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        console.error('[generate-improvement-report] Invalid JSON from AI:', content);
-        throw new Error('Invalid JSON format from AI');
+      // Parse JSON response directly (Gemini returns valid JSON with responseMimeType)
+      console.log('[generate-improvement-report] Raw AI response length:', content?.length);
+      console.log('[generate-improvement-report] Response preview:', content?.substring(0, 200));
+
+      let reportData;
+      try {
+        reportData = JSON.parse(content);
+      } catch (parseError) {
+        console.error('[generate-improvement-report] Failed to parse JSON:', content);
+        console.error('Parse error:', parseError);
+        throw new Error('Invalid JSON from AI: ' + (parseError as Error).message);
       }
 
-      const reportData = JSON.parse(jsonMatch[0]);
+      // Validate structure
+      if (!reportData?.recommendations || !Array.isArray(reportData.recommendations)) {
+        console.error('[generate-improvement-report] Invalid structure:', reportData);
+        throw new Error('Invalid report structure: missing or invalid recommendations');
+      }
 
       // Insert report into database
       const { data: insertedReport, error: insertError } = await supabase

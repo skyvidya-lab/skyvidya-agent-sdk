@@ -97,6 +97,27 @@ Seja específico e acionável.`;
         generationConfig: {
           temperature: 0.4,
           maxOutputTokens: 2000,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                insight_type: { type: "string", enum: ["gap", "pattern", "recommendation"] },
+                severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
+                title: { type: "string" },
+                description: { type: "string" },
+                evidence: { 
+                  type: "object",
+                  properties: {
+                    examples: { type: "array", items: { type: "string" } }
+                  }
+                },
+                recommendations: { type: "array", items: { type: "string" } }
+              },
+              required: ["insight_type", "severity", "title", "description", "recommendations"]
+            }
+          }
         },
       }),
     });
@@ -113,13 +134,28 @@ Seja específico e acionável.`;
     const aiData = await aiResponse.json();
     const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    // Parse JSON response from AI
-    const jsonMatch = aiContent.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error('Failed to parse AI response as JSON');
+    console.log('[generate-cognitive-insights] Raw AI response length:', aiContent?.length);
+    console.log('[generate-cognitive-insights] Response preview:', aiContent?.substring(0, 200));
+
+    if (!aiContent) {
+      throw new Error('No content received from Gemini API');
     }
 
-    const insights = JSON.parse(jsonMatch[0]);
+    // Parse JSON response directly (Gemini returns valid JSON with responseMimeType)
+    let insights;
+    try {
+      insights = JSON.parse(aiContent);
+    } catch (parseError) {
+      console.error('[generate-cognitive-insights] Failed to parse JSON:', aiContent);
+      console.error('Parse error:', parseError);
+      throw new Error('Invalid JSON from AI: ' + (parseError as Error).message);
+    }
+
+    // Validate structure
+    if (!Array.isArray(insights)) {
+      console.error('[generate-cognitive-insights] Invalid structure - not an array:', insights);
+      throw new Error('Invalid insights structure: expected array');
+    }
 
     // Inserir insights no banco
     const insightsToInsert = insights.map((insight: any) => ({
