@@ -12,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Generate tenant image function called - with Lovable AI integration');
     const { prompt, imageType, tenantId, context = 'tenant' } = await req.json();
     
     if (!prompt || !imageType) {
