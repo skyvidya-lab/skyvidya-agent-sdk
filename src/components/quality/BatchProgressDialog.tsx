@@ -9,6 +9,7 @@ import { Clock, TrendingUp, Target, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+
 interface BatchProgressDialogProps {
   batchId: string | null;
   open: boolean;
