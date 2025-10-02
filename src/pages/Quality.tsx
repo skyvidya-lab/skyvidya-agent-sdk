@@ -21,32 +21,34 @@ import { useAuth } from "@/hooks/useAuth";
 import { ImprovementReportGenerator } from "@/components/quality/ImprovementReportGenerator";
 import { ImprovementReportList } from "@/components/quality/ImprovementReportList";
 import { usePendingReports } from "@/hooks/usePendingReports";
-
 export default function Quality() {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [showNewTestCase, setShowNewTestCase] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showBatchExecution, setShowBatchExecution] = useState(false);
-
-  const { data: profile } = useQuery({
+  const {
+    data: profile
+  } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("current_tenant_id")
-        .eq("id", user?.id)
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from("profiles").select("current_tenant_id").eq("id", user?.id).single();
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id
   });
-
-  const { data: testCases } = useTestCases(profile?.current_tenant_id || "");
+  const {
+    data: testCases
+  } = useTestCases(profile?.current_tenant_id || "");
   const exportTestCases = useExportTestCases();
-  const { data: pendingReports } = usePendingReports(profile?.current_tenant_id || "");
-
+  const {
+    data: pendingReports
+  } = usePendingReports(profile?.current_tenant_id || "");
   const handleExport = () => {
     if (!testCases || testCases.length === 0) {
       toast.error("Nenhum caso de teste para exportar");
@@ -54,16 +56,11 @@ export default function Quality() {
     }
     exportTestCases.mutate(testCases);
   };
-
-  return (
-    <AppLayout>
-      {profile?.current_tenant_id ? (
-        <div className="p-6 space-y-6">
+  return <AppLayout>
+      {profile?.current_tenant_id ? <div className="p-6 space-y-6">
           <div className="flex items-center justify-between mb-8 animate-fade-in">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Qualidade & Testes
-              </h1>
+              <h1 className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">Qualidade &amp; Conformidade</h1>
               <p className="text-muted-foreground mt-2">
                 Validação automatizada e métricas de performance dos seus agentes
               </p>
@@ -84,11 +81,9 @@ export default function Quality() {
               <TabsTrigger value="agreement">Concordância (Kappa)</TabsTrigger>
               <TabsTrigger value="improvements" className="relative">
                 Relatórios de Melhoria
-                {pendingReports && pendingReports.count > 0 && (
-                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {pendingReports && pendingReports.count > 0 && <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {pendingReports.count}
-                  </span>
-                )}
+                  </span>}
               </TabsTrigger>
             </TabsList>
 
@@ -127,11 +122,7 @@ export default function Quality() {
                 </CardContent>
               </GlassCard>
 
-              <TestCaseForm 
-                tenantId={profile.current_tenant_id}
-                open={showNewTestCase} 
-                onOpenChange={setShowNewTestCase}
-              />
+              <TestCaseForm tenantId={profile.current_tenant_id} open={showNewTestCase} onOpenChange={setShowNewTestCase} />
             </TabsContent>
 
             <TabsContent value="executions" className="space-y-4 animate-fade-in">
@@ -188,23 +179,11 @@ export default function Quality() {
             </TabsContent>
           </Tabs>
 
-          <ImportTestCasesDialog
-            workspaceId={profile.current_tenant_id}
-            open={showImport}
-            onOpenChange={setShowImport}
-          />
+          <ImportTestCasesDialog workspaceId={profile.current_tenant_id} open={showImport} onOpenChange={setShowImport} />
 
-          <BatchExecutionDialog
-            workspaceId={profile.current_tenant_id}
-            open={showBatchExecution}
-            onOpenChange={setShowBatchExecution}
-          />
-        </div>
-      ) : (
-        <div className="flex items-center justify-center h-full p-6">
+          <BatchExecutionDialog workspaceId={profile.current_tenant_id} open={showBatchExecution} onOpenChange={setShowBatchExecution} />
+        </div> : <div className="flex items-center justify-center h-full p-6">
           <p className="text-muted-foreground">Selecione um tenant para visualizar a qualidade</p>
-        </div>
-      )}
-    </AppLayout>
-  );
+        </div>}
+    </AppLayout>;
 }
