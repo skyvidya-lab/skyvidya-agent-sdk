@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/ui/glass-card";
 import { TestCaseList } from "@/components/quality/TestCaseList";
 import { TestExecutionList } from "@/components/quality/TestExecutionList";
 import { QualityMetrics } from "@/components/quality/QualityMetrics";
@@ -48,11 +49,13 @@ export default function Quality() {
     <AppLayout>
       {profile?.current_tenant_id ? (
         <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-8 animate-fade-in">
             <div>
-              <h1 className="text-3xl font-bold">Qualidade & Testes</h1>
-              <p className="text-muted-foreground">
-                Gerencie casos de teste, execuções e métricas de qualidade
+              <h1 className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+                Qualidade & Testes
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Validação automatizada e métricas de performance dos seus agentes
               </p>
             </div>
           </div>
@@ -67,22 +70,22 @@ export default function Quality() {
               <TabsTrigger value="executions">Histórico de Execuções</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="test-cases" className="space-y-4">
-              <Card>
+            <TabsContent value="test-cases" className="space-y-4 animate-fade-in">
+              <GlassCard>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Casos de Teste</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-2xl">Casos de Teste</CardTitle>
+                      <CardDescription className="text-base mt-1">
                         Gerencie e execute casos de teste para validar seus agentes
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={handleExport}>
+                      <Button variant="outline" size="sm" onClick={handleExport} className="hover:bg-primary/10">
                         <FileDown className="h-4 w-4 mr-2" />
                         Exportar CSV
                       </Button>
-                      <Button size="sm" onClick={() => setShowNewTestCase(true)}>
+                      <Button size="sm" onClick={() => setShowNewTestCase(true)} className="shadow-lg">
                         <Plus className="h-4 w-4 mr-2" />
                         Novo Caso
                       </Button>
@@ -92,7 +95,7 @@ export default function Quality() {
                 <CardContent>
                   <TestCaseList tenantId={profile.current_tenant_id} />
                 </CardContent>
-              </Card>
+              </GlassCard>
 
               <TestCaseForm 
                 tenantId={profile.current_tenant_id}
@@ -101,18 +104,18 @@ export default function Quality() {
               />
             </TabsContent>
 
-            <TabsContent value="executions" className="space-y-4">
-              <Card>
+            <TabsContent value="executions" className="space-y-4 animate-fade-in">
+              <GlassCard>
                 <CardHeader>
-                  <CardTitle>Histórico de Execuções</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-2xl">Histórico de Execuções</CardTitle>
+                  <CardDescription className="text-base mt-1">
                     Visualize o histórico completo de execuções de teste
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <TestExecutionList tenantId={profile.current_tenant_id} />
                 </CardContent>
-              </Card>
+              </GlassCard>
             </TabsContent>
           </Tabs>
         </div>

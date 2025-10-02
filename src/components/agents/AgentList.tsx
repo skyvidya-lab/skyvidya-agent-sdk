@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useAgents, useDeleteAgent } from "@/hooks/useAgents";
 import { useTestAgentConnection } from "@/hooks/useTestAgentConnection";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Activity, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Activity, CheckCircle2, XCircle, Loader2, Bot } from "lucide-react";
 import { AgentForm } from "./AgentForm";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingState } from "@/components/ui/loading-state";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,63 +113,91 @@ export function AgentList({ tenantId }: AgentListProps) {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">Carregando...</div>;
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Agentes de IA
+            </h1>
+            <p className="text-muted-foreground mt-2">Configure e gerencie seus assistentes inteligentes</p>
+          </div>
+        </div>
+        <LoadingState type="card" count={6} />
+      </div>
+    );
   }
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Agentes</h1>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
+      <div className="flex justify-between items-center mb-6 animate-fade-in">
+        <div>
+          <h1 className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Agentes de IA
+          </h1>
+          <p className="text-muted-foreground mt-2">Configure e gerencie seus assistentes inteligentes</p>
+        </div>
+        <Button onClick={handleCreate} size="lg" className="shadow-lg hover:shadow-xl transition-shadow">
+          <Plus className="h-5 w-5 mr-2" />
           Criar Agente
         </Button>
       </div>
 
       {!agents || agents.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-muted-foreground">
-            Nenhum agente encontrado. Crie seu primeiro agente!
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Bot}
+          title="Nenhum agente criado"
+          description="Crie seu primeiro agente de IA para começar a automatizar interações e fornecer assistência inteligente aos seus usuários."
+          action={{
+            label: "Criar Primeiro Agente",
+            onClick: handleCreate
+          }}
+        />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {agents.map((agent) => (
-            <Card key={agent.id}>
-              <CardHeader>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+          {agents.map((agent, index) => (
+            <GlassCard key={agent.id} className="group relative overflow-hidden" style={{ animationDelay: `${index * 50}ms` }}>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <GlassCardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{agent.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">
+                  <div className="space-y-2 flex-1 mr-2">
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-lg bg-primary/10 p-2">
+                        <Bot className="h-4 w-4 text-primary" />
+                      </div>
+                      <GlassCardTitle className="text-lg">{agent.name}</GlassCardTitle>
+                    </div>
+                    <GlassCardDescription className="line-clamp-2">
                       {agent.description}
-                    </CardDescription>
+                    </GlassCardDescription>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(agent)}>
-                      <Pencil className="h-4 w-4" />
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(agent)} className="h-8 w-8">
+                      <Pencil className="h-3 w-3" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteClick(agent.id)}
+                      className="h-8 w-8 hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </GlassCardHeader>
+              <GlassCardContent>
                 <div className="space-y-3">
                   <div className="flex gap-2 flex-wrap">
-                    <Badge variant="outline">{agent.platform}</Badge>
-                    <Badge variant={agent.status === "active" ? "default" : "secondary"}>
+                    <Badge variant="outline" className="text-xs">{agent.platform}</Badge>
+                    <Badge variant={agent.status === "active" ? "default" : "secondary"} className="text-xs">
                       {agent.status}
                     </Badge>
                     {getStatusBadge(agent.id)}
                   </div>
                   {agent.model_name && (
-                    <p className="text-sm text-muted-foreground">
-                      Modelo: {agent.model_name}
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium">Modelo:</span> {agent.model_name}
                     </p>
                   )}
                   <TooltipProvider>
@@ -176,7 +206,7 @@ export function AgentList({ tenantId }: AgentListProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full"
+                          className="w-full mt-2 hover:bg-primary/10 transition-colors"
                           onClick={() => handleTestConnection(agent)}
                           disabled={testingAgentId === agent.id}
                         >
@@ -199,8 +229,8 @@ export function AgentList({ tenantId }: AgentListProps) {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </CardContent>
-            </Card>
+              </GlassCardContent>
+            </GlassCard>
           ))}
         </div>
       )}
