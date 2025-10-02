@@ -89,6 +89,7 @@ serve(async (req) => {
             executionIds.push(execution.id);
 
             // Call agent
+            const callStartTime = Date.now();
             const { data: agentResponse, error: callError } = await supabase.functions.invoke('call-agent', {
               body: {
                 agent_id,
@@ -98,15 +99,27 @@ serve(async (req) => {
             });
 
             if (callError) throw new Error(`Agent call failed: ${callError.message}`);
+            if (!agentResponse) throw new Error('Agent returned no response');
+
+            const callLatencyMs = Date.now() - callStartTime;
+            const actual_answer = agentResponse.message || agentResponse.answer || null;
+
+            console.log('Agent response:', {
+              test_case_id,
+              agent_id,
+              has_message: !!actual_answer,
+              message_length: actual_answer?.length || 0,
+              latency_ms: callLatencyMs
+            });
 
             // Update execution with agent response
             await supabase
               .from('test_executions')
               .update({
-                actual_answer: agentResponse.response,
-                latency_ms: agentResponse.latency_ms,
-                tokens_used: agentResponse.tokens_used,
-                cost_usd: agentResponse.cost_usd
+                actual_answer: actual_answer,
+                latency_ms: callLatencyMs,
+                tokens_used: agentResponse.metadata?.tokens_used || null,
+                cost_usd: agentResponse.metadata?.cost_usd || null
               })
               .eq('id', execution.id);
 
@@ -116,7 +129,7 @@ serve(async (req) => {
                 execution_id: execution.id,
                 question: testCase.question,
                 expected_answer: testCase.expected_answer,
-                actual_answer: agentResponse.response
+                actual_answer: actual_answer || ''
               }
             });
 
