@@ -36,7 +36,7 @@ import { useCreateAgent, useUpdateAgent } from "@/hooks/useAgents";
 import { useTestAgentConnection } from "@/hooks/useTestAgentConnection";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plug, Info } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const agentSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres").max(100),
@@ -117,6 +117,27 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
   
   const canTest = isExternal && !!(platformAgentId && apiEndpoint && apiKeyReference);
 
+  // Reset form when agent changes or dialog opens
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: agent?.name || "",
+        description: agent?.description || "",
+        platform: agent?.platform || "dify",
+        platform_agent_id: agent?.platform_agent_id || "",
+        api_endpoint: agent?.api_endpoint || "",
+        api_key_reference: agent?.api_key_reference || "",
+        model_name: agent?.model_name || "",
+        temperature: agent?.temperature || 0.7,
+        max_tokens: agent?.max_tokens || 2000,
+        system_prompt: agent?.system_prompt || "",
+        knowledge_base: agent?.knowledge_base || "",
+        tenant_id: tenantId,
+      });
+      setTestResult(null);
+    }
+  }, [agent, open, tenantId, form]);
+
   const handleTestConnection = () => {
     setTestResult(null);
     
@@ -156,7 +177,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} key={agent?.id || 'new'}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{agent ? "Editar Agente" : "Criar Agente"}</DialogTitle>
@@ -195,7 +216,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Plataforma</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a plataforma" />
@@ -258,7 +279,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                               <TooltipTrigger asChild>
                                 <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
-                              <TooltipContent className="max-w-xs bg-popover text-popover-foreground border shadow-md z-50">
+                              <TooltipContent className="max-w-xs bg-popover text-popover-foreground border shadow-md z-[300]">
                                 <div className="space-y-2 text-sm">
                                   <p className="font-semibold">💡 Como funciona:</p>
                                   <ol className="list-decimal list-inside space-y-1">
@@ -440,7 +461,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                           <TooltipTrigger asChild>
                             <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs z-[300]">
                             <p className="text-sm">
                               Instruções fundamentais que definem o comportamento do agente.
                               <strong className="block mt-2">💡 Importante para análise de qualidade!</strong>
@@ -472,7 +493,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                           <TooltipTrigger asChild>
                             <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs z-[300]">
                             <p className="text-sm">
                               Informações e contexto específico usado pelo agente.
                               <strong className="block mt-2">💡 Crucial para relatórios de melhoria automáticos!</strong>
