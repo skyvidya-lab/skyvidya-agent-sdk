@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgreementAnalysis } from '@/hooks/useAgreementAnalysis';
-import { Target, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Target, AlertTriangle, CheckCircle, TrendingUp, Eye } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AgreementDetailView } from './AgreementDetailView';
+import { AgreementHeatmap } from './AgreementHeatmap';
 
 interface AgreementDashboardProps {
   workspaceId: string;
@@ -12,6 +15,7 @@ interface AgreementDashboardProps {
 }
 
 export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashboardProps) => {
+  const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const { data: agreements = [], isLoading } = useAgreementAnalysis(workspaceId, benchmarkId);
 
   const avgKappa = agreements.length > 0
@@ -46,8 +50,9 @@ export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashbo
   }
 
   return (
-    <div className="space-y-6">
-      {/* Overview Cards */}
+    <>
+      <div className="space-y-6">
+        {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
@@ -112,6 +117,9 @@ export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashbo
         </Card>
       </div>
 
+      {/* Heatmap */}
+      <AgreementHeatmap workspaceId={workspaceId} benchmarkId={benchmarkId} />
+
       {/* Detailed Table */}
       <Card>
         <CardHeader>
@@ -137,15 +145,16 @@ export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashbo
                     <TableHead>Interpretação</TableHead>
                     <TableHead>Consenso</TableHead>
                     <TableHead>Discordância</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {agreements.map(agreement => (
-                    <TableRow key={agreement.id}>
-                      <TableCell className="font-mono text-xs">
-                        {agreement.test_case_id.substring(0, 8)}...
-                      </TableCell>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {agreements.map(agreement => (
+                  <TableRow key={agreement.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-mono text-xs">
+                      {agreement.test_case_id.substring(0, 8)}...
+                    </TableCell>
                       <TableCell>
                         <Badge className={getKappaColor(agreement.kappa_score)}>
                           {agreement.kappa_score.toFixed(3)}
@@ -162,20 +171,29 @@ export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashbo
                           {agreement.disagreement_level}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {agreement.requires_human_review && !agreement.human_review_completed && (
-                          <Badge variant="secondary">Aguardando Revisão</Badge>
-                        )}
-                        {agreement.human_review_completed && (
-                          <Badge variant="default">Revisado</Badge>
-                        )}
-                        {!agreement.requires_human_review && (
-                          <Badge variant="outline">OK</Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                    <TableCell>
+                      {agreement.requires_human_review && !agreement.human_review_completed && (
+                        <Badge variant="secondary">Aguardando Revisão</Badge>
+                      )}
+                      {agreement.human_review_completed && (
+                        <Badge variant="default">Revisado</Badge>
+                      )}
+                      {!agreement.requires_human_review && (
+                        <Badge variant="outline">OK</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedAgreementId(agreement.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
               </Table>
             </TabsContent>
 
@@ -259,6 +277,14 @@ export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashbo
           </Tabs>
         </CardContent>
       </Card>
-    </div>
+      </div>
+
+      <AgreementDetailView
+        agreementId={selectedAgreementId}
+        workspaceId={workspaceId}
+        open={!!selectedAgreementId}
+        onOpenChange={(open) => !open && setSelectedAgreementId(null)}
+      />
+    </>
   );
 };
