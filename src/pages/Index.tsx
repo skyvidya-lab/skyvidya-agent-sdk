@@ -117,7 +117,7 @@ const Index = () => {
               Skyvidya Agent SDK
             </h1>
             <p className="mb-4 text-xl text-muted-foreground md:text-2xl">Plataforma de Orquestração de AI Agentes</p>
-            <p className="mb-8 text-lg text-muted-foreground max-w-2xl mx-auto">Nossa missão é clara: democratizar o compliance de agentes de IA especializados para qualquer organização. Pense em um maestro digital que gerencia, conecta e governa seus agentes de forma unificada e segura</p>
+            <p className="mb-8 text-lg text-muted-foreground max-w-2xl mx-auto">Nossa missão é transparente: democratizar a validação de compliance de agentes IA para qualquer organização. Pense em um maestro digital que conecta, avalia e aperfeiçoa seus agentes e base de conhecimento de forma unificada e segura</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
               <Button size="lg" className="gap-2 shadow-lg hover:shadow-xl transition-all" onClick={() => navigate('/auth')}>
                 Começar Agora
