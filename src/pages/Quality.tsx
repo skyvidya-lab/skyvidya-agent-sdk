@@ -12,6 +12,7 @@ import { TestCaseForm } from "@/components/quality/TestCaseForm";
 import { ImportTestCasesDialog } from "@/components/quality/ImportTestCasesDialog";
 import { BatchExecutionDialog } from "@/components/quality/BatchExecutionDialog";
 import { AgreementDashboard } from "@/components/quality/AgreementDashboard";
+import { ActiveBatchIndicator } from "@/components/quality/ActiveBatchIndicator";
 import { useExportTestCases, useTestCases } from "@/hooks/useTestCases";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
@@ -64,6 +65,9 @@ export default function Quality() {
               </p>
             </div>
           </div>
+
+          {/* Active Batch Indicator */}
+          <ActiveBatchIndicator workspaceId={profile.current_tenant_id} />
 
           {/* Metrics Overview */}
           <QualityMetrics tenantId={profile.current_tenant_id} />

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useTestExecutions } from "@/hooks/useTestExecutions";
-import { Eye, Clock, Coins } from "lucide-react";
+import { Eye, Clock, Coins, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { TestExecutionDetail } from "./TestExecutionDetail";
@@ -10,14 +10,33 @@ import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "./StatusBadge";
 import { ScoreDisplay } from "./ScoreDisplay";
+import { useDeleteExecutions } from "@/hooks/useDeleteExecutions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TestExecutionListProps {
   tenantId: string;
+  showClearButton?: boolean;
 }
 
-export function TestExecutionList({ tenantId }: TestExecutionListProps) {
+export function TestExecutionList({ tenantId, showClearButton = true }: TestExecutionListProps) {
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { data: executions, isLoading } = useTestExecutions(tenantId);
+  const deleteExecutions = useDeleteExecutions();
+
+  const handleClearHistory = async () => {
+    await deleteExecutions.mutateAsync({ workspaceId: tenantId });
+    setShowDeleteDialog(false);
+  };
 
   if (isLoading) {
     return (
@@ -45,6 +64,20 @@ export function TestExecutionList({ tenantId }: TestExecutionListProps) {
 
   return (
     <>
+      {showClearButton && executions && executions.length > 0 && (
+        <div className="flex justify-end mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Limpar Histórico
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-border/50 overflow-hidden">
         <Table>
           <TableHeader>
@@ -126,6 +159,28 @@ export function TestExecutionList({ tenantId }: TestExecutionListProps) {
           onOpenChange={(open) => !open && setSelectedExecutionId(null)}
         />
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar Histórico de Execuções</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá remover permanentemente todas as {executions?.length || 0} execuções deste workspace.
+              As métricas serão recalculadas. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearHistory}
+              disabled={deleteExecutions.isPending}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleteExecutions.isPending ? 'Removendo...' : 'Limpar Histórico'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
