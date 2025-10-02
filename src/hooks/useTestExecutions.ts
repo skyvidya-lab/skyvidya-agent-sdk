@@ -213,6 +213,7 @@ export const useExecuteTest = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['test-executions', variables.workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['execution-metrics', variables.workspaceId] });
       toast.success('Teste executado com sucesso');
     },
     onError: (error: Error) => {
