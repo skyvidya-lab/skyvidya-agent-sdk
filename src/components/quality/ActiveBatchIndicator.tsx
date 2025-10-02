@@ -5,6 +5,17 @@ import { Play, X } from "lucide-react";
 import { useActiveBatches } from "@/hooks/useActiveBatches";
 import { BatchProgressDialog } from "./BatchProgressDialog";
 import { Card } from "@/components/ui/card";
+import { useCancelBatchExecution } from "@/hooks/useCancelBatchExecution";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ActiveBatchIndicatorProps {
   workspaceId: string;
@@ -13,6 +24,8 @@ interface ActiveBatchIndicatorProps {
 export const ActiveBatchIndicator = ({ workspaceId }: ActiveBatchIndicatorProps) => {
   const { data: activeBatches = [] } = useActiveBatches(workspaceId);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const cancelMutation = useCancelBatchExecution();
 
   if (activeBatches.length === 0) return null;
 
@@ -47,15 +60,50 @@ export const ActiveBatchIndicator = ({ workspaceId }: ActiveBatchIndicatorProps)
               </div>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedBatchId(latestBatch.id)}
-          >
-            Ver Detalhes
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedBatchId(latestBatch.id)}
+            >
+              Ver Detalhes
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowCancelDialog(true)}
+              disabled={cancelMutation.isPending}
+            >
+              <X className="h-4 w-4 mr-1" />
+              Cancelar
+            </Button>
+          </div>
         </div>
       </Card>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Execução em Lote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja cancelar esta execução? Os testes já concluídos 
+              serão mantidos, mas os testes restantes não serão executados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Não, continuar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                cancelMutation.mutate(latestBatch.id);
+                setShowCancelDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, cancelar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BatchProgressDialog
         batchId={selectedBatchId}

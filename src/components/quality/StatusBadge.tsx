@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Clock, Ban } from "lucide-react";
 
 interface StatusBadgeProps {
-  status: 'passed' | 'failed' | 'warning' | 'pending';
+  status: 'passed' | 'failed' | 'warning' | 'pending' | 'running' | 'completed' | 'cancelled';
   showIcon?: boolean;
   className?: string;
 }
@@ -28,6 +28,21 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
       label: 'Pendente',
       className: 'status-badge-pending text-white border-0',
       icon: Clock,
+    },
+    running: {
+      label: 'Em Execução',
+      className: 'bg-blue-500 text-white border-0',
+      icon: Clock,
+    },
+    completed: {
+      label: 'Concluído',
+      className: 'status-badge-success text-white border-0',
+      icon: CheckCircle2,
+    },
+    cancelled: {
+      label: 'Cancelado',
+      className: 'bg-orange-500 text-white border-0',
+      icon: Ban,
     },
   };
 

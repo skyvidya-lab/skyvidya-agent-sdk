@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -5,9 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "./StatusBadge";
 import { useBatchExecutionProgress } from "@/hooks/useBatchExecutionProgress";
-import { Clock, TrendingUp, Target, Zap } from "lucide-react";
+import { useCancelBatchExecution } from "@/hooks/useCancelBatchExecution";
+import { Clock, TrendingUp, Target, Zap, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 interface BatchProgressDialogProps {
@@ -17,7 +29,9 @@ interface BatchProgressDialogProps {
 }
 
 export const BatchProgressDialog = ({ batchId, open, onOpenChange }: BatchProgressDialogProps) => {
-  const { progress, isLoading, percentComplete, successRate, canClose } = useBatchExecutionProgress(batchId);
+  const { progress, isLoading, percentComplete, successRate, canClose, isCancelling } = useBatchExecutionProgress(batchId);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const cancelMutation = useCancelBatchExecution();
 
   if (isLoading || !progress) {
     return (
@@ -173,19 +187,60 @@ export const BatchProgressDialog = ({ batchId, open, onOpenChange }: BatchProgre
 
           {/* Actions */}
           <div className="flex gap-2 justify-end">
+            {(progress.status === 'running' || progress.status === 'pending') && !isCancelling && (
+              <Button
+                variant="destructive"
+                onClick={() => setShowCancelDialog(true)}
+                disabled={cancelMutation.isPending}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar Execução
+              </Button>
+            )}
             {canClose && (
               <Button onClick={handleClose}>
                 Fechar
               </Button>
             )}
-            {!canClose && (
+            {!canClose && !isCancelling && (
               <Button variant="outline" disabled>
                 Aguarde a conclusão...
+              </Button>
+            )}
+            {isCancelling && (
+              <Button variant="outline" disabled>
+                Cancelando...
               </Button>
             )}
           </div>
         </div>
       </DialogContent>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Execução em Lote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja cancelar esta execução? Os testes já concluídos 
+              serão mantidos, mas os testes restantes não serão executados. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Não, continuar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (batchId) {
+                  cancelMutation.mutate(batchId);
+                }
+                setShowCancelDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, cancelar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

@@ -94,12 +94,14 @@ export const useBatchExecutionProgress = (batchId: string | null) => {
     : 0;
 
   const canClose = progress?.status === 'completed' || progress?.status === 'failed' || progress?.status === 'cancelled';
+  const isCancelling = progress?.status === 'cancelled';
 
   return {
     progress,
     isLoading,
     percentComplete,
     successRate,
-    canClose
+    canClose,
+    isCancelling
   };
 };

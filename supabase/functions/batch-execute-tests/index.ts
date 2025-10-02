@@ -47,6 +47,44 @@ serve(async (req) => {
 
     // Execute tests in batches with concurrency control
     for (let i = 0; i < test_case_ids.length; i += concurrency) {
+      // Check if batch was cancelled before processing next batch
+      const { data: currentBatch } = await supabase
+        .from('batch_executions')
+        .select('status')
+        .eq('id', batch_id)
+        .single();
+
+      if (currentBatch?.status === 'cancelled') {
+        console.log(`Batch execution ${batch_id} cancelled by user`);
+        await supabase
+          .from('batch_executions')
+          .update({ 
+            completed_at: new Date().toISOString(),
+            error_log: [...errorLog, {
+              timestamp: new Date().toISOString(),
+              level: 'info',
+              message: 'Execução cancelada pelo usuário'
+            }]
+          })
+          .eq('id', batch_id);
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            cancelled: true,
+            batch_id,
+            results: {
+              total: totalTests,
+              completed: completedTests,
+              successful: successfulTests,
+              failed: failedTests
+            },
+            message: `Execução cancelada. ${successfulTests} testes completados com sucesso antes do cancelamento.`
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       const batch = test_case_ids.slice(i, i + concurrency);
       
       const batchPromises = batch.flatMap(test_case_id =>
