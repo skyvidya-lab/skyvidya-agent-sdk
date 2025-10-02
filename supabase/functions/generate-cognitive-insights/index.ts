@@ -19,10 +19,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
-    if (!geminiApiKey) {
-      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -83,56 +83,42 @@ Foque em:
 Seja específico e acionável.`;
 
     const systemContent = 'Você é um analista especialista em IA que identifica padrões e gera insights acionáveis.';
-    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + geminiApiKey, {
+    
+    console.log('[generate-cognitive-insights] Using Lovable AI Gateway');
+    console.log('[generate-cognitive-insights] Model: google/gemini-2.5-flash (FREE)');
+    
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `${systemContent}\n\n${analysisPrompt}`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 2000,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                insight_type: { type: "string", enum: ["gap", "pattern", "recommendation"] },
-                severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
-                title: { type: "string" },
-                description: { type: "string" },
-                evidence: { 
-                  type: "object",
-                  properties: {
-                    examples: { type: "array", items: { type: "string" } }
-                  }
-                },
-                recommendations: { type: "array", items: { type: "string" } }
-              },
-              required: ["insight_type", "severity", "title", "description", "recommendations"]
-            }
-          }
-        },
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemContent },
+          { role: 'user', content: analysisPrompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 2000,
+        response_format: { type: "json_object" }
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Gemini API error:', aiResponse.status, errorText);
+      console.error('Lovable AI Gateway error:', aiResponse.status, errorText);
       if (aiResponse.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
+        throw new Error('Rate limit atingido. Aguarde alguns segundos e tente novamente.');
       }
-      throw new Error(`Gemini API error: ${aiResponse.status}`);
+      if (aiResponse.status === 402) {
+        throw new Error('Créditos esgotados. Adicione fundos ao workspace Lovable.');
+      }
+      throw new Error(`Lovable AI Gateway error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    const aiContent = aiData.choices?.[0]?.message?.content;
 
     console.log('[generate-cognitive-insights] Raw AI response length:', aiContent?.length);
     console.log('[generate-cognitive-insights] Response preview:', aiContent?.substring(0, 200));
