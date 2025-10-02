@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.generate-improvement-report]
 verify_jwt = true
+
+[functions.generate-tenant-image]
+verify_jwt = true

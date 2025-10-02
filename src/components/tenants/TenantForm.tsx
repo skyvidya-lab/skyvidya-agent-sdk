@@ -2,7 +2,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Sparkles } from "lucide-react";
+import { ImageGeneratorDialog } from "./ImageGeneratorDialog";
+import type { ImageType } from "@/lib/imagePromptTemplates";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +80,8 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
   const updateTenant = useUpdateTenant();
   const [uploading, setUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState(tenant?.logo_url || "");
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [currentImageType, setCurrentImageType] = useState<ImageType>('logo');
 
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantSchema),
@@ -144,6 +148,20 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
   const removeLogo = () => {
     form.setValue("logo_url", "");
     setLogoPreview("");
+  };
+
+  const handleOpenAiDialog = (type: ImageType) => {
+    setCurrentImageType(type);
+    setAiDialogOpen(true);
+  };
+
+  const handleImageGenerated = (url: string) => {
+    if (currentImageType === 'logo') {
+      form.setValue("logo_url", url);
+      setLogoPreview(url);
+    } else if (currentImageType === 'background') {
+      form.setValue("background_image_url", url);
+    }
   };
 
   const onSubmit = (data: TenantFormValues) => {
@@ -237,31 +255,45 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                           <FormLabel>Logo</FormLabel>
                           <FormControl>
                             <div className="space-y-2">
-                              {logoPreview ? (
-                                <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
-                                  <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-1 right-1 h-6 w-6"
-                                    onClick={removeLogo}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <label className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleLogoUpload}
-                                    className="hidden"
-                                    disabled={uploading}
-                                  />
-                                  <Upload className="h-8 w-8 text-muted-foreground" />
-                                </label>
-                              )}
+                              <div className="flex gap-2">
+                                {logoPreview ? (
+                                  <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
+                                    <img src={logoPreview} alt="Logo preview" className="w-full h-full object-contain" />
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="icon"
+                                      className="absolute top-1 right-1 h-6 w-6"
+                                      onClick={removeLogo}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <label className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={handleLogoUpload}
+                                      className="hidden"
+                                      disabled={uploading}
+                                    />
+                                    <Upload className="h-8 w-8 text-muted-foreground" />
+                                  </label>
+                                )}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => handleOpenAiDialog('logo')}
+                                  className="flex-1 h-32"
+                                >
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Sparkles className="h-6 w-6 text-primary" />
+                                    <span className="text-sm">Gerar com IA</span>
+                                    <span className="text-xs text-muted-foreground">GRATUITO</span>
+                                  </div>
+                                </Button>
+                              </div>
                             </div>
                           </FormControl>
                           <FormDescription>
@@ -293,7 +325,18 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                                   </Button>
                                 </div>
                               )}
-                              <Input {...field} placeholder="https://exemplo.com/background.jpg" />
+                              <div className="flex gap-2">
+                                <Input {...field} placeholder="https://exemplo.com/background.jpg" className="flex-1" />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => handleOpenAiDialog('background')}
+                                  className="shrink-0"
+                                >
+                                  <Sparkles className="h-4 w-4 mr-2 text-primary" />
+                                  Gerar com IA
+                                </Button>
+                              </div>
                             </div>
                           </FormControl>
                           <FormDescription>
@@ -552,6 +595,15 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
             </div>
           </div>
         </div>
+
+        {/* AI Image Generator Dialog */}
+        <ImageGeneratorDialog
+          open={aiDialogOpen}
+          onOpenChange={setAiDialogOpen}
+          imageType={currentImageType}
+          tenantId={tenant?.id || 'new'}
+          onImageGenerated={handleImageGenerated}
+        />
       </DialogContent>
     </Dialog>
   );
