@@ -55,6 +55,7 @@ const agentSchema = z.object({
   temperature: z.number().min(0).max(1).optional(),
   max_tokens: z.number().min(100).max(4000).optional(),
   system_prompt: z.string().optional(),
+  knowledge_base: z.string().optional(),
   tenant_id: z.string().uuid(),
 }).refine((data) => {
   const isExternal = ['dify', 'crewai', 'langflow'].includes(data.platform);
@@ -101,6 +102,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
       temperature: agent?.temperature || 0.7,
       max_tokens: agent?.max_tokens || 2000,
       system_prompt: agent?.system_prompt || "",
+      knowledge_base: agent?.knowledge_base || "",
       tenant_id: tenantId,
     },
   });
@@ -431,7 +433,22 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                 name="system_prompt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>System Prompt {selectedPlatform === 'native' && '*'}</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>System Prompt {selectedPlatform === 'native' && '*'}</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-sm">
+                              Instruções fundamentais que definem o comportamento do agente.
+                              <strong className="block mt-2">💡 Importante para análise de qualidade!</strong>
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <FormControl>
                       <Textarea
                         placeholder="Você é um assistente útil..."
@@ -439,6 +456,41 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="knowledge_base"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Base de Conhecimento</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-sm">
+                              Informações e contexto específico usado pelo agente.
+                              <strong className="block mt-2">💡 Crucial para relatórios de melhoria automáticos!</strong>
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Contexto e informações específicas que o agente deve conhecer..."
+                        className="min-h-[150px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Documentação, FAQs, políticas e outros dados que o agente deve ter acesso
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

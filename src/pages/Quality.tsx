@@ -18,6 +18,9 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ImprovementReportGenerator } from "@/components/quality/ImprovementReportGenerator";
+import { ImprovementReportList } from "@/components/quality/ImprovementReportList";
+import { usePendingReports } from "@/hooks/usePendingReports";
 
 export default function Quality() {
   const { user } = useAuth();
@@ -42,6 +45,7 @@ export default function Quality() {
 
   const { data: testCases } = useTestCases(profile?.current_tenant_id || "");
   const exportTestCases = useExportTestCases();
+  const { data: pendingReports } = usePendingReports(profile?.current_tenant_id || "");
 
   const handleExport = () => {
     if (!testCases || testCases.length === 0) {
@@ -78,6 +82,14 @@ export default function Quality() {
               <TabsTrigger value="test-cases">Casos de Teste</TabsTrigger>
               <TabsTrigger value="executions">Histórico de Execuções</TabsTrigger>
               <TabsTrigger value="agreement">Concordância (Kappa)</TabsTrigger>
+              <TabsTrigger value="improvements" className="relative">
+                Relatórios de Melhoria
+                {pendingReports && pendingReports.count > 0 && (
+                  <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {pendingReports.count}
+                  </span>
+                )}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="test-cases" className="space-y-4 animate-fade-in">
@@ -149,6 +161,28 @@ export default function Quality() {
                 </CardHeader>
                 <CardContent>
                   <AgreementDashboard workspaceId={profile.current_tenant_id} />
+                </CardContent>
+              </GlassCard>
+            </TabsContent>
+
+            <TabsContent value="improvements" className="space-y-4 animate-fade-in">
+              <GlassCard>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        <Target className="h-6 w-6" />
+                        Relatórios de Melhoria
+                      </CardTitle>
+                      <CardDescription className="text-base mt-1">
+                        Análise automatizada com aprovação humana (HIL)
+                      </CardDescription>
+                    </div>
+                    <ImprovementReportGenerator workspaceId={profile.current_tenant_id} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ImprovementReportList workspaceId={profile.current_tenant_id} />
                 </CardContent>
               </GlassCard>
             </TabsContent>
