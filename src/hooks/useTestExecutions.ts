@@ -158,15 +158,56 @@ export const useExecuteTest = () => {
         throw agentError;
       }
 
+      // Extract actual answer from agent response
+      const actualAnswer = agentResponse.message || agentResponse.response || 'No response';
+      
+      // Update execution with actual answer and latency
+      await supabase
+        .from('test_executions')
+        .update({
+          actual_answer: actualAnswer,
+          latency_ms: latency,
+        })
+        .eq('id', execution.id);
+
       // Call validation function
-      const { data: validation } = await supabase.functions.invoke('validate-agent-response', {
+      const { data: validation, error: validationError } = await supabase.functions.invoke('validate-agent-response', {
         body: {
           execution_id: execution.id,
           question: testCase.question,
           expected_answer: testCase.expected_answer,
-          actual_answer: agentResponse.response,
+          actual_answer: actualAnswer,
         },
       });
+
+      // Check if validation failed
+      if (validationError) {
+        console.error('Validation error:', validationError);
+        
+        // Update execution status to failed
+        await supabase
+          .from('test_executions')
+          .update({
+            status: 'failed',
+          })
+          .eq('id', execution.id);
+        
+        throw new Error(`Falha na validação: ${validationError.message}`);
+      }
+
+      if (validation?.error) {
+        console.error('Validation returned error:', validation.error);
+        
+        // Update execution status to failed
+        await supabase
+          .from('test_executions')
+          .update({
+            status: 'failed',
+          })
+          .eq('id', execution.id);
+        
+        throw new Error(`Erro na análise: ${validation.error}`);
+      }
 
       return { execution, validation };
     },

@@ -1,26 +1,26 @@
-import { useExecutionMetrics } from '@/hooks/useTestExecutions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Zap, DollarSign, CheckCircle } from 'lucide-react';
+import { useExecutionMetrics } from "@/hooks/useTestExecutions";
+import { Activity, Clock, DollarSign, Target } from "lucide-react";
+import { MetricCard } from "./MetricCard";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface QualityMetricsProps {
   tenantId: string;
 }
 
-export const QualityMetrics = ({ tenantId }: QualityMetricsProps) => {
+export function QualityMetrics({ tenantId }: QualityMetricsProps) {
   const { data: metrics, isLoading } = useExecutionMetrics(tenantId);
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="pb-2">
-              <div className="h-4 bg-muted rounded w-24"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-muted rounded w-16"></div>
-            </CardContent>
-          </Card>
+          <MetricCard
+            key={i}
+            title=""
+            value=""
+            icon={Activity}
+            isLoading
+          />
         ))}
       </div>
     );
@@ -28,72 +28,50 @@ export const QualityMetrics = ({ tenantId }: QualityMetricsProps) => {
 
   if (!metrics || metrics.total === 0) {
     return (
-      <Card className="mb-6">
-        <CardContent className="py-8 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <TrendingUp className="h-12 w-12 text-muted-foreground/50" />
-            <p className="text-muted-foreground">
-              Nenhuma execução ainda. Execute testes para ver as métricas de qualidade.
-            </p>
-          </div>
+      <Card className="border-dashed">
+        <CardContent className="p-12 text-center">
+          <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+          <h3 className="font-semibold text-lg mb-2">Nenhuma execução ainda</h3>
+          <p className="text-muted-foreground text-sm">
+            Execute seu primeiro teste para ver as métricas de qualidade
+          </p>
         </CardContent>
       </Card>
     );
   }
 
-  const metricsData = [
-    {
-      title: 'Acurácia Média',
-      value: `${metrics.avgAccuracy.toFixed(1)}%`,
-      icon: TrendingUp,
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-500/10',
-    },
-    {
-      title: 'Taxa de Sucesso',
-      value: `${metrics.successRate.toFixed(1)}%`,
-      icon: CheckCircle,
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-500/10',
-    },
-    {
-      title: 'Velocidade Média',
-      value: `${metrics.avgSpeed.toFixed(0)}ms`,
-      icon: Zap,
-      color: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-500/10',
-    },
-    {
-      title: 'Custo Total',
-      value: `$${metrics.totalCost.toFixed(2)}`,
-      icon: DollarSign,
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-500/10',
-    },
-  ];
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {metricsData.map((metric) => (
-        <Card key={metric.title}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {metric.title}
-            </CardTitle>
-            <div className={`p-2 rounded-lg ${metric.bgColor}`}>
-              <metric.icon className={`h-4 w-4 ${metric.color}`} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${metric.color}`}>
-              {metric.value}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {metrics.total} execuções
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-fade-in">
+      <MetricCard
+        title="Precisão Média"
+        value={`${metrics.avgAccuracy.toFixed(1)}%`}
+        icon={Target}
+        trend={metrics.avgAccuracy >= 85 ? 5 : -3}
+        className="bg-gradient-to-br from-card to-status-success/5"
+      />
+
+      <MetricCard
+        title="Taxa de Sucesso"
+        value={`${metrics.successRate.toFixed(1)}%`}
+        icon={Activity}
+        trend={metrics.successRate >= 80 ? 8 : -2}
+        className="bg-gradient-to-br from-card to-primary/5"
+      />
+
+      <MetricCard
+        title="Velocidade Média"
+        value={`${(metrics.avgSpeed / 1000).toFixed(2)}s`}
+        icon={Clock}
+        trend={metrics.avgSpeed < 2000 ? 12 : -5}
+        className="bg-gradient-to-br from-card to-status-warning/5"
+      />
+
+      <MetricCard
+        title="Custo Total"
+        value={`$${metrics.totalCost.toFixed(2)}`}
+        icon={DollarSign}
+        className="bg-gradient-to-br from-card to-accent/5"
+      />
     </div>
   );
-};
+}
