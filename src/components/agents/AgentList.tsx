@@ -157,7 +157,7 @@ export function AgentList({ tenantId }: AgentListProps) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 animate-fade-in">
           {agents.map((agent, index) => (
             <GlassCard key={agent.id} className="group relative overflow-hidden" style={{ animationDelay: `${index * 50}ms` }}>
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <GlassCardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-2 flex-1 mr-2">
@@ -171,7 +171,7 @@ export function AgentList({ tenantId }: AgentListProps) {
                       {agent.description}
                     </GlassCardDescription>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-1 opacity-70 group-hover:opacity-100 transition-opacity relative z-10">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(agent)} className="h-8 w-8">
                       <Pencil className="h-3 w-3" />
                     </Button>
