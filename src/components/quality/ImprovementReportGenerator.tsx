@@ -39,7 +39,7 @@ export const ImprovementReportGenerator = ({ workspaceId }: ImprovementReportGen
 
   const generateReport = useGenerateImprovementReport();
 
-  const { data: agents } = useQuery({
+  const { data: agents, isLoading: isLoadingAgents, error: agentsError } = useQuery({
     queryKey: ['agents', workspaceId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -53,6 +53,7 @@ export const ImprovementReportGenerator = ({ workspaceId }: ImprovementReportGen
       return data;
     },
     enabled: !!workspaceId,
+    retry: 1,
   });
 
   const handleGenerate = () => {
@@ -103,11 +104,11 @@ export const ImprovementReportGenerator = ({ workspaceId }: ImprovementReportGen
           {/* Agent Selection */}
           <div className="space-y-2">
             <Label>Agente</Label>
-            <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+            <Select value={selectedAgent} onValueChange={setSelectedAgent} disabled={isLoadingAgents}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um agente" />
+                <SelectValue placeholder={isLoadingAgents ? "Carregando..." : agentsError ? "Erro ao carregar" : "Selecione um agente"} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[200] bg-popover" sideOffset={5}>
                 {agents?.map((agent) => (
                   <SelectItem key={agent.id} value={agent.id}>
                     {agent.name}
@@ -115,6 +116,9 @@ export const ImprovementReportGenerator = ({ workspaceId }: ImprovementReportGen
                 ))}
               </SelectContent>
             </Select>
+            {agentsError && (
+              <p className="text-xs text-destructive">Erro ao carregar agentes. Tente novamente.</p>
+            )}
           </div>
 
           {/* Report Types */}
@@ -151,7 +155,7 @@ export const ImprovementReportGenerator = ({ workspaceId }: ImprovementReportGen
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[200] bg-popover" sideOffset={5}>
                 <SelectItem value="50">50% - Muito Baixo</SelectItem>
                 <SelectItem value="60">60% - Baixo</SelectItem>
                 <SelectItem value="70">70% - Médio</SelectItem>
@@ -168,7 +172,7 @@ export const ImprovementReportGenerator = ({ workspaceId }: ImprovementReportGen
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="z-[200] bg-popover" sideOffset={5}>
                 <SelectItem value="7">Últimos 7 dias</SelectItem>
                 <SelectItem value="14">Últimos 14 dias</SelectItem>
                 <SelectItem value="30">Últimos 30 dias</SelectItem>

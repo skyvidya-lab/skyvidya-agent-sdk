@@ -201,7 +201,7 @@ export function AgentForm({ open, onOpenChange, agent, tenantId }: AgentFormProp
                         <SelectValue placeholder="Selecione a plataforma" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent position="popper" className="z-[200] bg-popover" sideOffset={5}>
                       <SelectItem value="dify">Dify</SelectItem>
                       <SelectItem value="langflow">Langflow</SelectItem>
                       <SelectItem value="crewai">CrewAI</SelectItem>
