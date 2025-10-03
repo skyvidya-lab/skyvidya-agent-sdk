@@ -21,10 +21,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    const difyApiKey = Deno.env.get('DIFY_API_KEY_SKYVIDYA');
 
-    if (!geminiApiKey) {
-      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
+    if (!difyApiKey) {
+      throw new Error('DIFY_API_KEY_SKYVIDYA not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     console.log('Validating execution:', execution_id);
 
-    // Chamar Google Gemini para validação
+    // Chamar Lovable AI Gateway para validação
     const validationPrompt = `Você é um validador especialista em qualidade de respostas de IA.
 
 PERGUNTA: ${question}
@@ -58,32 +58,38 @@ Critérios de avaliação:
 - cognitive_gaps: conceitos ausentes ou mal explicados
 - improvement_suggestions: como melhorar a resposta`;
 
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${difyApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: validationPrompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 2048,
-        }
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'user', content: validationPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2048,
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI Gateway error:', aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      if (aiResponse.status === 402) {
+        throw new Error('Insufficient credits. Please add funds to your Lovable AI workspace.');
+      }
+      
       throw new Error(`AI Gateway error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    const aiContent = aiData.choices?.[0]?.message?.content;
 
     if (!aiContent) {
       throw new Error('No content in AI response');
