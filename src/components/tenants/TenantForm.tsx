@@ -188,7 +188,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{tenant ? "Editar Tenant" : "Criar Tenant"}</DialogTitle>
+          <DialogTitle>{tenant ? "Editar Workspace" : "Criar Workspace"}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -209,7 +209,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                         <FormItem>
                           <FormLabel>Nome</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nome do tenant" {...field} />
+                            <Input placeholder="Nome do workspace" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

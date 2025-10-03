@@ -24,9 +24,9 @@ interface AppSidebarProps {
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Tenants", url: "/tenants", icon: Building2 },
+  { title: "Workspaces", url: "/tenants", icon: Building2 },
   { title: "Agentes", url: "/agents", icon: Bot },
-  { title: "Chat", url: "/chat", icon: MessageSquare },
+  { title: "Playground", url: "/chat", icon: MessageSquare },
   { title: "Qualidade", url: "/quality", icon: FlaskConical },
   { title: "Benchmarks", url: "/benchmarks", icon: Target },
   { title: "Logs", url: "/logs", icon: Activity },

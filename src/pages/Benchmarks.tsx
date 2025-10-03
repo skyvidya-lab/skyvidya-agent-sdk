@@ -265,7 +265,7 @@ export default function Benchmarks() {
         </div>
       ) : (
         <div className="flex items-center justify-center h-full p-6">
-          <p className="text-muted-foreground">Selecione um tenant para visualizar benchmarks</p>
+          <p className="text-muted-foreground">Selecione um workspace para visualizar benchmarks</p>
         </div>
       )}
     </AppLayout>

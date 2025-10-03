@@ -99,7 +99,7 @@ export function TenantSwitcher() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-xs">
-          Nenhum tenant disponível
+          Nenhum workspace disponível
         </AlertDescription>
       </Alert>
     );
@@ -111,7 +111,7 @@ export function TenantSwitcher() {
       onValueChange={(value) => switchTenant.mutate(value)}
     >
       <SelectTrigger className="w-full relative z-50">
-        <SelectValue placeholder="Selecione um tenant" />
+        <SelectValue placeholder="Selecione um workspace" />
       </SelectTrigger>
       <SelectContent 
         className="z-[100] bg-popover"

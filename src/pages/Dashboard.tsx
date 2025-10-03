@@ -73,7 +73,7 @@ export default function Dashboard() {
           <GlassCard className="relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <GlassCardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium text-muted-foreground">Total de Tenants</p>
+              <p className="text-sm font-medium text-muted-foreground">Total de Workspaces</p>
               <div className="rounded-lg bg-primary/10 p-2">
                 <Building2 className="h-4 w-4 text-primary" />
               </div>

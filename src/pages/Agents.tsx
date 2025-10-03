@@ -33,9 +33,9 @@ export default function Agents() {
             <div className="rounded-full bg-primary/10 p-6 inline-block mb-4">
               <Bot className="h-12 w-12 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold">Nenhum Tenant Selecionado</h3>
+            <h3 className="text-xl font-semibold">Nenhum Workspace Selecionado</h3>
             <p className="text-muted-foreground max-w-md">
-              Selecione um tenant no menu lateral para visualizar e gerenciar seus agentes
+              Selecione um workspace no menu lateral para visualizar e gerenciar seus agentes
             </p>
           </div>
         </div>

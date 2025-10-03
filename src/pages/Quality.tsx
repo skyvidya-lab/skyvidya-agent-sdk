@@ -183,7 +183,7 @@ export default function Quality() {
 
           <BatchExecutionDialog workspaceId={profile.current_tenant_id} open={showBatchExecution} onOpenChange={setShowBatchExecution} />
         </div> : <div className="flex items-center justify-center h-full p-6">
-          <p className="text-muted-foreground">Selecione um tenant para visualizar a qualidade</p>
+          <p className="text-muted-foreground">Selecione um workspace para visualizar a qualidade</p>
         </div>}
     </AppLayout>;
 }

@@ -23,11 +23,11 @@ export default function TenantDomains() {
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar para Tenants
+            Voltar para Workspaces
           </Button>
           <h1 className="text-3xl font-bold">Gerenciar Domínios</h1>
           <p className="text-muted-foreground mt-2">
-            Configure domínios customizados para acesso direto ao seu tenant
+            Configure domínios customizados para acesso direto ao seu workspace
           </p>
         </div>
 

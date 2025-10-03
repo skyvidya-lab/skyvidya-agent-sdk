@@ -29,11 +29,11 @@ export function TenantList() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Tenants</h1>
+    <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Workspaces</h1>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Criar Tenant
+          Criar Workspace
         </Button>
       </div>
 
