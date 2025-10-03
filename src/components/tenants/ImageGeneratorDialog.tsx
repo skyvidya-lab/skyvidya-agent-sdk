@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sparkles, RefreshCw, Download } from "lucide-react";
+import { Sparkles, RefreshCw, Download, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -194,8 +194,8 @@ export function ImageGeneratorDialog({
               >
                 {generateImage.isPending ? (
                   <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Gerando...
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Gerando imagem...
                   </>
                 ) : (
                   <>
