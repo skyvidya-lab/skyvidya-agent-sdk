@@ -120,14 +120,25 @@ Seja específico e acionável.`;
     }
 
     const aiData = await aiResponse.json();
+    console.log('[GEMINI] Full response:', JSON.stringify(aiData, null, 2));
+    console.log('[GEMINI] Candidates:', aiData.candidates);
+    console.log('[GEMINI] First candidate:', aiData.candidates?.[0]);
+
+    // Check for safety blocks
+    if (aiData.candidates?.[0]?.finishReason === 'SAFETY') {
+      console.error('[GEMINI] Blocked by safety:', aiData.candidates[0].safetyRatings);
+      throw new Error('Conteúdo bloqueado por filtros de segurança da IA');
+    }
+
     const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!aiContent) {
+      console.error('[GEMINI] No content. Full response:', JSON.stringify(aiData));
+      throw new Error('Nenhum conteúdo retornado pela IA');
+    }
 
     console.log('[generate-cognitive-insights] Raw AI response length:', aiContent?.length);
     console.log('[generate-cognitive-insights] Response preview:', aiContent?.substring(0, 200));
-
-    if (!aiContent) {
-      throw new Error('No content received from Gemini API');
-    }
 
     // Parse JSON response directly (Gemini returns valid JSON with responseMimeType)
     let insights;
