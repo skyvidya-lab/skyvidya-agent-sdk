@@ -79,21 +79,33 @@ serve(async (req) => {
       const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
       
       try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{ text: prompt }]
-              }]
-            }),
-            signal: controller.signal,
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`;
+        const requestBody = {
+          instances: [
+            {
+              prompt: prompt
+            }
+          ],
+          parameters: {
+            sampleCount: 1
           }
-        );
+        };
+
+        console.log('[DEBUG] Request URL:', apiUrl.replace(geminiApiKey, 'REDACTED'));
+        console.log('[DEBUG] Request body:', JSON.stringify(requestBody, null, 2));
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+
+        console.log('[DEBUG] Response status:', response.status);
+        console.log('[DEBUG] Response headers:', Object.fromEntries(response.headers));
+
         clearTimeout(timeout);
         return response;
       } catch (error) {
@@ -103,6 +115,10 @@ serve(async (req) => {
     });
 
     if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('[DEBUG] Raw error response:', errorText);
+      console.error('Google Imagen API error:', aiResponse.status, errorText);
+      
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit do Google atingido. Aguarde e tente novamente.' }),
@@ -115,26 +131,24 @@ serve(async (req) => {
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      const errorText = await aiResponse.text();
-      console.error('Google Gemini API error:', aiResponse.status, errorText);
-      throw new Error(`Google Gemini API error: ${aiResponse.status}`);
+      throw new Error(`Google Imagen API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('[GEMINI] Full response:', JSON.stringify(aiData, null, 2));
-    console.log('[GEMINI] Candidates:', aiData.candidates);
-    console.log('[GEMINI] First candidate:', aiData.candidates?.[0]);
+    console.log('[IMAGEN] Full response:', JSON.stringify(aiData, null, 2));
 
-    // Check for safety blocks
-    if (aiData.candidates?.[0]?.finishReason === 'SAFETY') {
-      console.error('[GEMINI] Blocked by safety:', aiData.candidates[0].safetyRatings);
-      throw new Error('Conteúdo bloqueado por filtros de segurança da IA');
+    // Imagen API returns predictions array
+    const predictions = aiData.predictions;
+    
+    if (!predictions || predictions.length === 0) {
+      console.error('[IMAGEN] No predictions. Full response:', JSON.stringify(aiData));
+      throw new Error('Nenhuma imagem retornada pela API');
     }
 
-    // Extract base64 image from Gemini response (native format)
-    const base64Data = aiData.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    // Extract base64 image from first prediction
+    const base64Data = predictions[0].bytesBase64Encoded;
     if (!base64Data) {
-      console.error('[GEMINI] No image in response. Full structure:', JSON.stringify(aiData, null, 2));
+      console.error('[IMAGEN] No base64 data in prediction:', JSON.stringify(predictions[0]));
       throw new Error('Nenhuma imagem gerada pela IA');
     }
 

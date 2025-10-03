@@ -58,25 +58,35 @@ Critérios de avaliação:
 - cognitive_gaps: conceitos ausentes ou mal explicados
 - improvement_suggestions: como melhorar a resposta`;
 
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    const requestBody = {
+      contents: [{
+        parts: [{ text: validationPrompt }]
+      }],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json"
+      }
+    };
+
+    console.log('[DEBUG] Request URL:', apiUrl.replace(geminiApiKey, 'REDACTED'));
+    console.log('[DEBUG] Request body:', JSON.stringify(requestBody, null, 2));
+
+    const aiResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: validationPrompt }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 2048,
-          responseMimeType: "application/json"
-        }
-      }),
+      body: JSON.stringify(requestBody),
     });
+
+    console.log('[DEBUG] Response status:', aiResponse.status);
+    console.log('[DEBUG] Response headers:', Object.fromEntries(aiResponse.headers));
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
+      console.error('[DEBUG] Raw error response:', errorText);
       console.error('Google Gemini API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 403) {
