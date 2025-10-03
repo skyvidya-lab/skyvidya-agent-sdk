@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "./StatusBadge";
 import { ScoreDisplay } from "./ScoreDisplay";
 import { useDeleteExecutions } from "@/hooks/useDeleteExecutions";
+import { useDeletePendingExecutions } from "@/hooks/useDeletePendingExecutions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,12 +31,21 @@ interface TestExecutionListProps {
 export function TestExecutionList({ tenantId, showClearButton = true }: TestExecutionListProps) {
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDeletePendingDialog, setShowDeletePendingDialog] = useState(false);
   const { data: executions, isLoading } = useTestExecutions(tenantId);
   const deleteExecutions = useDeleteExecutions();
+  const deletePendingExecutions = useDeletePendingExecutions();
+
+  const pendingCount = executions?.filter(e => e.status === 'pending').length || 0;
 
   const handleClearHistory = async () => {
     await deleteExecutions.mutateAsync({ workspaceId: tenantId });
     setShowDeleteDialog(false);
+  };
+
+  const handleClearPending = async () => {
+    await deletePendingExecutions.mutateAsync({ workspaceId: tenantId });
+    setShowDeletePendingDialog(false);
   };
 
   if (isLoading) {
@@ -65,7 +75,18 @@ export function TestExecutionList({ tenantId, showClearButton = true }: TestExec
   return (
     <>
       {showClearButton && executions && executions.length > 0 && (
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end gap-2 mb-4">
+          {pendingCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeletePendingDialog(true)}
+              className="text-warning hover:bg-warning/10"
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Limpar Pendentes ({pendingCount})
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -177,6 +198,28 @@ export function TestExecutionList({ tenantId, showClearButton = true }: TestExec
               className="bg-destructive hover:bg-destructive/90"
             >
               {deleteExecutions.isPending ? 'Removendo...' : 'Limpar Histórico'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeletePendingDialog} onOpenChange={setShowDeletePendingDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar Execuções Pendentes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá remover apenas as {pendingCount} execução(ões) pendente(s) que não foram concluídas.
+              O histórico de execuções bem-sucedidas será preservado. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearPending}
+              disabled={deletePendingExecutions.isPending}
+              className="bg-warning hover:bg-warning/90"
+            >
+              {deletePendingExecutions.isPending ? 'Removendo...' : 'Limpar Pendentes'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
