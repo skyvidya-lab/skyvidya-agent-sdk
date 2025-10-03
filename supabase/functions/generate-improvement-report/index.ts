@@ -20,13 +20,13 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Generate improvement report function called - with Lovable AI integration');
+    console.log('Generate improvement report function called - with Google Gemini API integration');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -220,42 +220,43 @@ Retorne APENAS um JSON válido neste formato:
 }`;
       }
 
-      // Call Lovable AI Gateway (FREE Gemini until Oct 6, 2025)
-      console.log('[generate-improvement-report] Using Lovable AI Gateway');
-      console.log('[generate-improvement-report] Model: google/gemini-2.5-flash (FREE)');
+      // Call Google Gemini API
+      console.log('[generate-improvement-report] Using Google Gemini API');
+      console.log('[generate-improvement-report] Model: gemini-2.5-flash');
       
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+      
+      const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 4000,
-          response_format: { type: "json_object" }
+          contents: [{
+            parts: [{ text: fullPrompt }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4000,
+            responseMimeType: "application/json"
+          }
         }),
       });
 
       if (!aiResponse.ok) {
         const errorText = await aiResponse.text();
-        console.error(`[generate-improvement-report] Lovable AI Gateway error: ${aiResponse.status} ${errorText}`);
+        console.error(`[generate-improvement-report] Google Gemini API error: ${aiResponse.status} ${errorText}`);
+        if (aiResponse.status === 403) {
+          throw new Error('GOOGLE_GEMINI_API_KEY inválida ou sem permissão');
+        }
         if (aiResponse.status === 429) {
-          throw new Error('Rate limit atingido. Aguarde alguns segundos e tente novamente.');
+          throw new Error('Rate limit do Google atingido. Aguarde e tente novamente.');
         }
-        if (aiResponse.status === 402) {
-          throw new Error('Créditos esgotados. Adicione fundos ao workspace Lovable.');
-        }
-        throw new Error(`Lovable AI Gateway error: ${aiResponse.status}`);
+        throw new Error(`Google Gemini API error: ${aiResponse.status}`);
       }
 
       const aiData = await aiResponse.json();
-      const content = aiData.choices?.[0]?.message?.content;
+      const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!content) {
         throw new Error('No content from AI');

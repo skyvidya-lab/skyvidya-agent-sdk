@@ -21,10 +21,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -58,38 +58,39 @@ Critérios de avaliação:
 - cognitive_gaps: conceitos ausentes ou mal explicados
 - improvement_suggestions: como melhorar a resposta`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'user', content: validationPrompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 2048,
+        contents: [{
+          parts: [{ text: validationPrompt }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 2048,
+          responseMimeType: "application/json"
+        }
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI Gateway error:', aiResponse.status, errorText);
+      console.error('Google Gemini API error:', aiResponse.status, errorText);
       
+      if (aiResponse.status === 403) {
+        throw new Error('GOOGLE_GEMINI_API_KEY inválida ou sem permissão');
+      }
       if (aiResponse.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
-      }
-      if (aiResponse.status === 402) {
-        throw new Error('Insufficient credits. Please add funds to your Lovable AI workspace.');
+        throw new Error('Rate limit do Google atingido. Aguarde e tente novamente.');
       }
       
-      throw new Error(`AI Gateway error: ${aiResponse.status}`);
+      throw new Error(`Google Gemini API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices?.[0]?.message?.content;
+    const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!aiContent) {
       throw new Error('No content in AI response');
