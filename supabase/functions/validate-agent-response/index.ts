@@ -21,10 +21,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const difyApiKey = Deno.env.get('DIFY_API_KEY_SKYVIDYA');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
-    if (!difyApiKey) {
-      throw new Error('DIFY_API_KEY_SKYVIDYA not configured');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -61,7 +61,7 @@ Critérios de avaliação:
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${difyApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
