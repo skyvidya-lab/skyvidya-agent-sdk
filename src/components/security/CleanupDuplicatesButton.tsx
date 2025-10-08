@@ -41,8 +41,9 @@ export function CleanupDuplicatesButton({ workspaceId }: CleanupDuplicatesButton
           <AlertDialogTitle>Limpar Casos de Teste Duplicados</AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <p>
-              Esta ação irá remover todos os casos de teste de segurança duplicados 
-              neste workspace, mantendo apenas a versão mais antiga de cada caso.
+              Esta ação irá remover <strong>todos os casos de teste duplicados</strong> 
+              neste workspace (funcionais e de segurança), mantendo apenas a versão 
+              mais antiga de cada caso.
             </p>
             <p className="text-amber-600 dark:text-amber-400 flex items-start gap-2">
               <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />

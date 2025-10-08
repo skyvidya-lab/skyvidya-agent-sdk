@@ -7,12 +7,11 @@ export const useCleanupDuplicateTests = () => {
 
   return useMutation({
     mutationFn: async ({ workspaceId }: { workspaceId: string }) => {
-      // Fetch all security test cases for this workspace
+      // Fetch all test cases for this workspace
       const { data: allTests, error: fetchError } = await supabase
         .from('test_cases')
         .select('id, question, created_at')
         .eq('workspace_id', workspaceId)
-        .eq('test_type', 'security')
         .order('question', { ascending: true })
         .order('created_at', { ascending: true });
 
