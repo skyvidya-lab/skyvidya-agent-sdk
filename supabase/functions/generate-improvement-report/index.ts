@@ -221,7 +221,12 @@ Retorne APENAS um JSON válido neste formato:
       }
 
       // Call Google Gemini API
-      console.log('[generate-improvement-report] Using Google Gemini API');
+      const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+      if (!geminiApiKey) {
+        throw new Error('GOOGLE_GEMINI_API_KEY not configured');
+      }
+
+      console.log('[generate-improvement-report] GOOGLE_GEMINI_API_KEY:', geminiApiKey ? 'CONFIGURED' : 'MISSING');
       console.log('[generate-improvement-report] Model: gemini-2.5-pro');
       
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;

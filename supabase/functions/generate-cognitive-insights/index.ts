@@ -83,10 +83,10 @@ Foque em:
 
 Seja específico e acionável.`;
 
-    const systemContent = 'Você é um analista especialista em IA que identifica padrões e gera insights acionáveis.';
-    
-    console.log('[generate-cognitive-insights] Using Google Gemini API');
+    console.log('[generate-cognitive-insights] GOOGLE_GEMINI_API_KEY:', geminiApiKey ? 'CONFIGURED' : 'MISSING');
     console.log('[generate-cognitive-insights] Model: gemini-2.5-pro');
+
+    const systemContent = 'Você é um analista especialista em IA que identifica padrões e gera insights acionáveis.';
     
     const fullPrompt = `${systemContent}\n\n${analysisPrompt}`;
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiApiKey}`;

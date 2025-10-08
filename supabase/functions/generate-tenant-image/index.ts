@@ -67,11 +67,14 @@ serve(async (req) => {
 
     console.log(`Generating ${imageType} for ${context} (${identifier}) with prompt:`, prompt);
 
-    // Use Google Gemini API for image generation (nano banana model)
+    // Use Google Gemini API for image generation (gemini-2.5-flash with image modality)
     const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
     if (!geminiApiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
+
+    console.log('[generate-tenant-image] GOOGLE_GEMINI_API_KEY:', geminiApiKey ? 'CONFIGURED' : 'MISSING');
+    console.log('[generate-tenant-image] Model: gemini-2.5-flash (image generation)');
 
     // Use retry with backoff for API calls
     const aiResponse = await retryWithBackoff(async () => {
@@ -79,15 +82,15 @@ serve(async (req) => {
       const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
       
       try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
         const requestBody = {
-          instances: [
-            {
-              prompt: prompt
-            }
-          ],
-          parameters: {
-            sampleCount: 1
+          contents: [{
+            parts: [{
+              text: `Generate an image based on this description: ${prompt}`
+            }]
+          }],
+          generationConfig: {
+            response_modalities: ["image"]
           }
         };
 
@@ -135,22 +138,25 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    console.log('[IMAGEN] Full response:', JSON.stringify(aiData, null, 2));
+    console.log('[GEMINI] Full response:', JSON.stringify(aiData, null, 2));
 
-    // Imagen API returns predictions array
-    const predictions = aiData.predictions;
-    
-    if (!predictions || predictions.length === 0) {
-      console.error('[IMAGEN] No predictions. Full response:', JSON.stringify(aiData));
+    // Gemini API with image modality returns candidates with inline_data
+    const candidate = aiData.candidates?.[0];
+    if (!candidate) {
+      console.error('[GEMINI] No candidates. Full response:', JSON.stringify(aiData));
       throw new Error('Nenhuma imagem retornada pela API');
     }
 
-    // Extract base64 image from first prediction
-    const base64Data = predictions[0].bytesBase64Encoded;
-    if (!base64Data) {
-      console.error('[IMAGEN] No base64 data in prediction:', JSON.stringify(predictions[0]));
+    // Extract base64 image from inline_data
+    const inlineData = candidate.content?.parts?.[0]?.inline_data;
+    if (!inlineData?.data) {
+      console.error('[GEMINI] No inline_data found. Candidate:', JSON.stringify(candidate));
       throw new Error('Nenhuma imagem gerada pela IA');
     }
+
+    const base64Data = inlineData.data;
+    const mimeType = inlineData.mime_type || 'image/png';
+    console.log('[GEMINI] Image mime type:', mimeType);
 
     // Gemini returns raw base64, convert to buffer
     const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));

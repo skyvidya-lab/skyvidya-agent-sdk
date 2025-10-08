@@ -58,6 +58,9 @@ Critérios de avaliação:
 - cognitive_gaps: conceitos ausentes ou mal explicados
 - improvement_suggestions: como melhorar a resposta`;
 
+    console.log('[validate-agent-response] GOOGLE_GEMINI_API_KEY:', geminiApiKey ? 'CONFIGURED' : 'MISSING');
+    console.log('[validate-agent-response] Model: gemini-2.5-flash');
+
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
     const requestBody = {
       contents: [{
