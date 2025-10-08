@@ -237,7 +237,7 @@ Retorne APENAS um JSON válido neste formato:
         }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 4000,
+          maxOutputTokens: 8192,
           responseMimeType: "application/json"
         }
       };
@@ -280,6 +280,12 @@ Retorne APENAS um JSON válido neste formato:
         throw new Error('Conteúdo bloqueado por filtros de segurança da IA');
       }
 
+      // Check for MAX_TOKENS
+      if (aiData.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+        console.error('[generate-improvement-report] MAX_TOKENS reached:', aiData.usageMetadata);
+        throw new Error('Resposta truncada: limite de tokens atingido. Tente simplificar o prompt.');
+      }
+
       const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!content) {
@@ -299,6 +305,14 @@ Retorne APENAS um JSON válido neste formato:
         console.error('Parse error:', parseError);
         throw new Error('Invalid JSON from AI: ' + (parseError as Error).message);
       }
+
+      // Log token usage
+      console.log('[generate-improvement-report] Token usage:', {
+        prompt: aiData.usageMetadata?.promptTokenCount,
+        output: aiData.usageMetadata?.candidatesTokenCount,
+        thinking: aiData.usageMetadata?.thoughtsTokenCount,
+        total: aiData.usageMetadata?.totalTokenCount
+      });
 
       // Validate structure
       if (!reportData?.recommendations || !Array.isArray(reportData.recommendations)) {

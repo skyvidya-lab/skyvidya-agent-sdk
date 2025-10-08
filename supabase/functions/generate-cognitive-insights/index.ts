@@ -96,7 +96,7 @@ Seja específico e acionável.`;
       }],
       generationConfig: {
         temperature: 0.4,
-        maxOutputTokens: 2000,
+        maxOutputTokens: 8192,
         responseMimeType: "application/json"
       }
     };
@@ -139,6 +139,12 @@ Seja específico e acionável.`;
       throw new Error('Conteúdo bloqueado por filtros de segurança da IA');
     }
 
+    // Check for MAX_TOKENS
+    if (aiData.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+      console.error('[generate-cognitive-insights] MAX_TOKENS reached:', aiData.usageMetadata);
+      throw new Error('Resposta truncada: limite de tokens atingido. Tente simplificar o prompt.');
+    }
+
     const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!aiContent) {
@@ -158,6 +164,14 @@ Seja específico e acionável.`;
       console.error('Parse error:', parseError);
       throw new Error('Invalid JSON from AI: ' + (parseError as Error).message);
     }
+
+    // Log token usage
+    console.log('[generate-cognitive-insights] Token usage:', {
+      prompt: aiData.usageMetadata?.promptTokenCount,
+      output: aiData.usageMetadata?.candidatesTokenCount,
+      thinking: aiData.usageMetadata?.thoughtsTokenCount,
+      total: aiData.usageMetadata?.totalTokenCount
+    });
 
     // Validate structure
     if (!Array.isArray(insights)) {

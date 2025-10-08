@@ -68,7 +68,7 @@ Critérios de avaliação:
       }],
       generationConfig: {
         temperature: 0.3,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 8192,
         responseMimeType: "application/json"
       }
     };
@@ -113,6 +113,12 @@ Critérios de avaliação:
       throw new Error('Conteúdo bloqueado por filtros de segurança da IA');
     }
 
+    // Check for MAX_TOKENS
+    if (aiData.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+      console.error('[validate-agent-response] MAX_TOKENS reached:', aiData.usageMetadata);
+      throw new Error('Resposta truncada: limite de tokens atingido. Tente simplificar o prompt.');
+    }
+
     const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!aiContent) {
@@ -128,6 +134,14 @@ Critérios de avaliação:
     }
 
     const validation = JSON.parse(jsonMatch[0]);
+
+    // Log token usage
+    console.log('[validate-agent-response] Token usage:', {
+      prompt: aiData.usageMetadata?.promptTokenCount,
+      output: aiData.usageMetadata?.candidatesTokenCount,
+      thinking: aiData.usageMetadata?.thoughtsTokenCount,
+      total: aiData.usageMetadata?.totalTokenCount
+    });
 
     // Determinar status baseado nos scores
     let status = 'passed';
