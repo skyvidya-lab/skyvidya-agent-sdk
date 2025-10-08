@@ -21,6 +21,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { ImprovementReportGenerator } from "@/components/quality/ImprovementReportGenerator";
 import { ImprovementReportList } from "@/components/quality/ImprovementReportList";
 import { usePendingReports } from "@/hooks/usePendingReports";
+import { SecurityDashboard } from "@/components/security/SecurityDashboard";
+import { SecurityTestImporter } from "@/components/security/SecurityTestImporter";
+import { Shield } from "lucide-react";
 export default function Quality() {
   const {
     user
@@ -84,6 +87,10 @@ export default function Quality() {
                 {pendingReports && pendingReports.count > 0 && <span className="ml-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {pendingReports.count}
                   </span>}
+              </TabsTrigger>
+              <TabsTrigger value="security">
+                <Shield className="h-4 w-4 mr-2" />
+                Segurança & Compliance
               </TabsTrigger>
             </TabsList>
 
@@ -174,6 +181,28 @@ export default function Quality() {
                 </CardHeader>
                 <CardContent>
                   <ImprovementReportList workspaceId={profile.current_tenant_id} />
+                </CardContent>
+              </GlassCard>
+            </TabsContent>
+
+            <TabsContent value="security" className="space-y-4 animate-fade-in">
+              <GlassCard>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl flex items-center gap-2">
+                        <Shield className="h-6 w-6" />
+                        Segurança & Compliance
+                      </CardTitle>
+                      <CardDescription className="text-base mt-1">
+                        Validação de prompt injection e análise de vulnerabilidades
+                      </CardDescription>
+                    </div>
+                    <SecurityTestImporter workspaceId={profile.current_tenant_id} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <SecurityDashboard workspaceId={profile.current_tenant_id} />
                 </CardContent>
               </GlassCard>
             </TabsContent>
