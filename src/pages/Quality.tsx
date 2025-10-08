@@ -23,6 +23,7 @@ import { ImprovementReportList } from "@/components/quality/ImprovementReportLis
 import { usePendingReports } from "@/hooks/usePendingReports";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { SecurityTestImporter } from "@/components/security/SecurityTestImporter";
+import { CleanupDuplicatesButton } from "@/components/security/CleanupDuplicatesButton";
 import { Shield } from "lucide-react";
 export default function Quality() {
   const {
@@ -198,7 +199,10 @@ export default function Quality() {
                         Validação de prompt injection e análise de vulnerabilidades
                       </CardDescription>
                     </div>
-                    <SecurityTestImporter workspaceId={profile.current_tenant_id} />
+                    <div className="flex gap-2">
+                      <CleanupDuplicatesButton workspaceId={profile.current_tenant_id} />
+                      <SecurityTestImporter workspaceId={profile.current_tenant_id} />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
