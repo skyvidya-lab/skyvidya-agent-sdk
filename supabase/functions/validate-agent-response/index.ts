@@ -58,7 +58,7 @@ Critérios de avaliação:
 - cognitive_gaps: conceitos ausentes ou mal explicados
 - improvement_suggestions: como melhorar a resposta`;
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
     const requestBody = {
       contents: [{
         parts: [{ text: validationPrompt }]

@@ -222,10 +222,10 @@ Retorne APENAS um JSON válido neste formato:
 
       // Call Google Gemini API
       console.log('[generate-improvement-report] Using Google Gemini API');
-      console.log('[generate-improvement-report] Model: gemini-1.5-flash');
+      console.log('[generate-improvement-report] Model: gemini-2.5-pro');
       
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiApiKey}`;
       const requestBody = {
         contents: [{
           parts: [{ text: fullPrompt }]
