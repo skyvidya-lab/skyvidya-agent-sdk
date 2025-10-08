@@ -1,11 +1,25 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, AlertTriangle, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Shield, AlertTriangle, CheckCircle, AlertCircle, TrendingUp, Trash2 } from 'lucide-react';
 import { useSecurityTestExecutions, SecurityTestExecution } from '@/hooks/useSecurityTestExecutions';
 import { useSecurityComplianceReports } from '@/hooks/useSecurityComplianceReports';
+import { useDeleteSecurityExecutions } from '@/hooks/useDeleteSecurityExecutions';
+import { useDeleteSecurityReports } from '@/hooks/useDeleteSecurityReports';
 import { useAutoImportSecurityTests } from '@/hooks/useAutoImportSecurityTests';
 import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { SecurityBatchExecutor } from './SecurityBatchExecutor';
 import { SecurityTestCSVImporter } from './SecurityTestCSVImporter';
 import { SecurityReportGenerator } from './SecurityReportGenerator';
@@ -24,6 +38,8 @@ export function SecurityDashboard({ workspaceId, agentId }: SecurityDashboardPro
   
   const { data: executions = [] } = useSecurityTestExecutions(workspaceId);
   const { data: reports = [] } = useSecurityComplianceReports(workspaceId);
+  const deleteExecutions = useDeleteSecurityExecutions();
+  const deleteReports = useDeleteSecurityReports();
 
   const filteredExecutions = agentId 
     ? executions.filter(e => e.agent_id === agentId)
@@ -68,6 +84,64 @@ export function SecurityDashboard({ workspaceId, agentId }: SecurityDashboardPro
         <SecurityBatchExecutor workspaceId={workspaceId} />
         <SecurityTestCSVImporter workspaceId={workspaceId} />
         <SecurityReportGenerator workspaceId={workspaceId} />
+        
+        {executions.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Limpar Execuções
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar Execuções de Segurança?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá remover permanentemente todas as execuções de testes de segurança 
+                  deste workspace. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteExecutions.mutate({ workspaceId })}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Limpar Tudo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        
+        {reports.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Limpar Relatórios
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar Relatórios de Compliance?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá remover permanentemente todos os relatórios de compliance de segurança 
+                  deste workspace. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteReports.mutate({ workspaceId })}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Limpar Tudo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {/* Header Cards */}

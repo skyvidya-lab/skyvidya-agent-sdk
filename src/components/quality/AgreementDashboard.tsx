@@ -4,10 +4,22 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgreementAnalysis } from '@/hooks/useAgreementAnalysis';
-import { Target, AlertTriangle, CheckCircle, TrendingUp, Eye } from 'lucide-react';
+import { useDeleteAgreementAnalysis } from '@/hooks/useDeleteAgreementAnalysis';
+import { Target, AlertTriangle, CheckCircle, TrendingUp, Eye, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AgreementDetailView } from './AgreementDetailView';
 import { AgreementHeatmap } from './AgreementHeatmap';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface AgreementDashboardProps {
   workspaceId: string;
@@ -17,6 +29,7 @@ interface AgreementDashboardProps {
 export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashboardProps) => {
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
   const { data: agreements = [], isLoading } = useAgreementAnalysis(workspaceId, benchmarkId);
+  const deleteAnalysis = useDeleteAgreementAnalysis();
 
   const avgKappa = agreements.length > 0
     ? agreements.reduce((sum, a) => sum + a.kappa_score, 0) / agreements.length
@@ -123,10 +136,42 @@ export const AgreementDashboard = ({ workspaceId, benchmarkId }: AgreementDashbo
       {/* Detailed Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Análises de Concordância</CardTitle>
-          <CardDescription>
-            Detalhamento da concordância entre agentes por caso de teste
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Análises de Concordância</CardTitle>
+              <CardDescription>
+                Detalhamento da concordância entre agentes por caso de teste
+              </CardDescription>
+            </div>
+            {agreements.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Limpar Análises
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Limpar Análises de Concordância?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação irá remover permanentemente todas as análises de concordância (Kappa) 
+                      deste workspace. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteAnalysis.mutate({ workspaceId })}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Limpar Tudo
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all">

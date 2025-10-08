@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useImprovementReports, ImprovementReport } from '@/hooks/useImprovementReports';
+import { useDeleteImprovementReports } from '@/hooks/useDeleteImprovementReports';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { FileText, BookOpen, FileCode, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { FileText, BookOpen, FileCode, Clock, CheckCircle, XCircle, AlertTriangle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ImprovementReportReviewDialog } from './ImprovementReportReviewDialog';
@@ -40,6 +52,8 @@ export const ImprovementReportList = ({ workspaceId }: ImprovementReportListProp
     report_type: typeFilter === 'all' ? undefined : (typeFilter as any),
   });
 
+  const deleteReports = useDeleteImprovementReports();
+
   if (isLoading) {
     return <div className="text-center py-8">Carregando relatórios...</div>;
   }
@@ -57,8 +71,9 @@ export const ImprovementReportList = ({ workspaceId }: ImprovementReportListProp
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex gap-4">
+      {/* Filters & Actions */}
+      <div className="flex justify-between items-center gap-4">
+        <div className="flex gap-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[200px]">
             <SelectValue />
@@ -73,16 +88,46 @@ export const ImprovementReportList = ({ workspaceId }: ImprovementReportListProp
           </SelectContent>
         </Select>
 
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Tipos</SelectItem>
-            <SelectItem value="knowledge_base">Base de Conhecimento</SelectItem>
-            <SelectItem value="system_prompt">System Prompt</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Tipos</SelectItem>
+              <SelectItem value="knowledge_base">Base de Conhecimento</SelectItem>
+              <SelectItem value="system_prompt">System Prompt</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {reports && reports.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Limpar Relatórios
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Limpar Relatórios de Melhoria?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá remover permanentemente todos os relatórios de melhoria 
+                  deste workspace. Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteReports.mutate({ workspaceId })}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Limpar Tudo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {/* Report Cards */}
