@@ -20,3 +20,9 @@ verify_jwt = true
 
 [functions.generate-tenant-image]
 verify_jwt = true
+
+[functions.execute-security-test]
+verify_jwt = true
+
+[functions.generate-security-compliance-report]
+verify_jwt = true
