@@ -14,24 +14,26 @@ export const useAutoImportSecurityTests = (workspaceId: string) => {
       if (!workspaceId || hasChecked) return;
 
       try {
-        // Check if workspace has any security test cases
-        const { data, error } = await supabase
+        // Check if workspace has any security test cases using count
+        const { count, error } = await supabase
           .from('test_cases')
-          .select('id', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: true })
           .eq('workspace_id', workspaceId)
           .eq('test_type', 'security');
 
         if (error) throw error;
 
-        const count = data?.length || 0;
-
         // If no security tests exist, auto-import predefined ones
         if (count === 0) {
-          await importMutation.mutateAsync({ workspaceId });
+          const result = await importMutation.mutateAsync({ workspaceId });
           
-          toast.success('✨ 20 casos de teste de segurança adicionados automaticamente', {
-            description: 'Casos predefinidos prontos para execução'
-          });
+          // Only show toast if cases were actually imported
+          if (result.imported > 0) {
+            toast.success(
+              `✨ ${result.imported} casos de teste de segurança adicionados automaticamente`,
+              { description: 'Casos predefinidos prontos para execução' }
+            );
+          }
 
           queryClient.invalidateQueries({ queryKey: ['test-cases', workspaceId] });
         }
