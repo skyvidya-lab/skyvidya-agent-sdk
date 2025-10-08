@@ -43,17 +43,45 @@ export const useCleanupDuplicateTests = () => {
         return { deleted: 0, kept: allTests.length };
       }
 
-      // Delete duplicates
-      const { error: deleteError } = await supabase
-        .from('test_cases')
-        .delete()
-        .in('id', duplicateIds);
+      // Delete duplicates in batches to avoid URL length limits
+      const BATCH_SIZE = 50;
+      let deletedCount = 0;
+      const totalBatches = Math.ceil(duplicateIds.length / BATCH_SIZE);
 
-      if (deleteError) throw deleteError;
+      for (let i = 0; i < duplicateIds.length; i += BATCH_SIZE) {
+        const batch = duplicateIds.slice(i, i + BATCH_SIZE);
+        const currentBatch = Math.floor(i / BATCH_SIZE) + 1;
+        
+        // Show progress
+        toast.info(
+          `Limpando duplicatas... (${Math.min(i + BATCH_SIZE, duplicateIds.length)}/${duplicateIds.length})`,
+          { 
+            description: `Lote ${currentBatch} de ${totalBatches}`,
+            duration: 1000 
+          }
+        );
+
+        try {
+          const { error: deleteError } = await supabase
+            .from('test_cases')
+            .delete()
+            .in('id', batch);
+
+          if (deleteError) {
+            console.error(`Erro ao deletar lote ${currentBatch}:`, deleteError);
+            throw deleteError;
+          }
+
+          deletedCount += batch.length;
+        } catch (error) {
+          // If one batch fails, throw error to stop the process
+          throw new Error(`Falha ao deletar lote ${currentBatch} de ${totalBatches}: ${error}`);
+        }
+      }
 
       return { 
-        deleted: duplicateIds.length, 
-        kept: allTests.length - duplicateIds.length 
+        deleted: deletedCount, 
+        kept: allTests.length - deletedCount 
       };
     },
     onSuccess: (data, variables) => {
