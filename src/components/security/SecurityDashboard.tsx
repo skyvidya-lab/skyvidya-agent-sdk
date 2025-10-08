@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Shield, AlertTriangle, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
-import { useSecurityTestExecutions } from '@/hooks/useSecurityTestExecutions';
+import { useSecurityTestExecutions, SecurityTestExecution } from '@/hooks/useSecurityTestExecutions';
 import { useSecurityComplianceReports } from '@/hooks/useSecurityComplianceReports';
+import { useAutoImportSecurityTests } from '@/hooks/useAutoImportSecurityTests';
 import { Progress } from '@/components/ui/progress';
+import { SecurityBatchExecutor } from './SecurityBatchExecutor';
+import { SecurityTestCSVImporter } from './SecurityTestCSVImporter';
+import { SecurityReportGenerator } from './SecurityReportGenerator';
+import { SecurityExecutionDetail } from './SecurityExecutionDetail';
 
 interface SecurityDashboardProps {
   workspaceId: string;
@@ -11,6 +17,11 @@ interface SecurityDashboardProps {
 }
 
 export function SecurityDashboard({ workspaceId, agentId }: SecurityDashboardProps) {
+  const [selectedExecution, setSelectedExecution] = useState<SecurityTestExecution | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  
+  useAutoImportSecurityTests(workspaceId);
+  
   const { data: executions = [] } = useSecurityTestExecutions(workspaceId);
   const { data: reports = [] } = useSecurityComplianceReports(workspaceId);
 
@@ -45,8 +56,20 @@ export function SecurityDashboard({ workspaceId, agentId }: SecurityDashboardPro
   const scoreNum = parseFloat(complianceScore as string);
   const scoreStatus = getScoreStatus(scoreNum);
 
+  const handleExecutionClick = (execution: SecurityTestExecution) => {
+    setSelectedExecution(execution);
+    setDetailOpen(true);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        <SecurityBatchExecutor workspaceId={workspaceId} />
+        <SecurityTestCSVImporter workspaceId={workspaceId} />
+        <SecurityReportGenerator workspaceId={workspaceId} />
+      </div>
+
       {/* Header Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -166,7 +189,12 @@ export function SecurityDashboard({ workspaceId, agentId }: SecurityDashboardPro
               {filteredExecutions.slice(0, 10).map((execution) => (
                 <div
                   key={execution.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
+                  onClick={() => handleExecutionClick(execution)}
+                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                    execution.security_status === 'failed' && execution.risk_level === 'critical'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900'
+                      : 'hover:bg-muted/50'
+                  }`}
                 >
                   <div className="flex-1">
                     <p className="text-sm font-medium line-clamp-1">
@@ -201,6 +229,13 @@ export function SecurityDashboard({ workspaceId, agentId }: SecurityDashboardPro
           )}
         </CardContent>
       </Card>
+
+      {/* Execution Detail Dialog */}
+      <SecurityExecutionDetail
+        execution={selectedExecution}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 }
