@@ -789,6 +789,179 @@ export type Database = {
           },
         ]
       }
+      security_compliance_reports: {
+        Row: {
+          agent_id: string
+          analysis_period_end: string
+          analysis_period_start: string
+          category_analysis: Json | null
+          compliance_score: number | null
+          critical_vulnerabilities: number | null
+          executive_summary: string | null
+          exported_at: string | null
+          exported_pdf_url: string | null
+          full_report: Json | null
+          generated_at: string | null
+          generated_by: string | null
+          high_vulnerabilities: number | null
+          id: string
+          lessons_learned: Json | null
+          low_vulnerabilities: number | null
+          medium_vulnerabilities: number | null
+          recommendations: Json | null
+          report_status: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          tests_failed: number
+          tests_passed: number
+          tests_warning: number
+          total_tests: number
+          vulnerabilities_found: Json | null
+          workspace_id: string
+        }
+        Insert: {
+          agent_id: string
+          analysis_period_end: string
+          analysis_period_start: string
+          category_analysis?: Json | null
+          compliance_score?: number | null
+          critical_vulnerabilities?: number | null
+          executive_summary?: string | null
+          exported_at?: string | null
+          exported_pdf_url?: string | null
+          full_report?: Json | null
+          generated_at?: string | null
+          generated_by?: string | null
+          high_vulnerabilities?: number | null
+          id?: string
+          lessons_learned?: Json | null
+          low_vulnerabilities?: number | null
+          medium_vulnerabilities?: number | null
+          recommendations?: Json | null
+          report_status?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          tests_failed?: number
+          tests_passed?: number
+          tests_warning?: number
+          total_tests?: number
+          vulnerabilities_found?: Json | null
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string
+          analysis_period_end?: string
+          analysis_period_start?: string
+          category_analysis?: Json | null
+          compliance_score?: number | null
+          critical_vulnerabilities?: number | null
+          executive_summary?: string | null
+          exported_at?: string | null
+          exported_pdf_url?: string | null
+          full_report?: Json | null
+          generated_at?: string | null
+          generated_by?: string | null
+          high_vulnerabilities?: number | null
+          id?: string
+          lessons_learned?: Json | null
+          low_vulnerabilities?: number | null
+          medium_vulnerabilities?: number | null
+          recommendations?: Json | null
+          report_status?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          tests_failed?: number
+          tests_passed?: number
+          tests_warning?: number
+          total_tests?: number
+          vulnerabilities_found?: Json | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      security_test_executions: {
+        Row: {
+          actual_response: string
+          agent_id: string
+          attack_patterns_matched: Json | null
+          detection_details: Json | null
+          executed_at: string | null
+          executed_by: string | null
+          false_positive: boolean | null
+          human_review_notes: string | null
+          human_reviewed: boolean | null
+          id: string
+          latency_ms: number | null
+          metadata: Json | null
+          question_asked: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string | null
+          security_status: string
+          test_case_id: string
+          tokens_used: number | null
+          vulnerability_detected: boolean | null
+          workspace_id: string
+        }
+        Insert: {
+          actual_response: string
+          agent_id: string
+          attack_patterns_matched?: Json | null
+          detection_details?: Json | null
+          executed_at?: string | null
+          executed_by?: string | null
+          false_positive?: boolean | null
+          human_review_notes?: string | null
+          human_reviewed?: boolean | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          question_asked: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string | null
+          security_status: string
+          test_case_id: string
+          tokens_used?: number | null
+          vulnerability_detected?: boolean | null
+          workspace_id: string
+        }
+        Update: {
+          actual_response?: string
+          agent_id?: string
+          attack_patterns_matched?: Json | null
+          detection_details?: Json | null
+          executed_at?: string | null
+          executed_by?: string | null
+          false_positive?: boolean | null
+          human_review_notes?: string | null
+          human_reviewed?: boolean | null
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json | null
+          question_asked?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string | null
+          security_status?: string
+          test_case_id?: string
+          tokens_used?: number | null
+          vulnerability_detected?: boolean | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_test_executions_test_case_id_fkey"
+            columns: ["test_case_id"]
+            isOneToOne: false
+            referencedRelation: "test_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_config: {
         Row: {
           accent_color: string | null
@@ -949,49 +1122,61 @@ export type Database = {
       test_cases: {
         Row: {
           agent_id: string | null
+          attack_category: string | null
           category: string
           context: string | null
           created_at: string | null
           created_by: string | null
+          detection_patterns: Json | null
           difficulty: string | null
           expected_answer: string
           expected_score_min: number | null
           id: string
           is_active: boolean | null
           question: string
+          severity: string | null
           tags: string[] | null
+          test_type: string | null
           updated_at: string | null
           workspace_id: string
         }
         Insert: {
           agent_id?: string | null
+          attack_category?: string | null
           category: string
           context?: string | null
           created_at?: string | null
           created_by?: string | null
+          detection_patterns?: Json | null
           difficulty?: string | null
           expected_answer: string
           expected_score_min?: number | null
           id?: string
           is_active?: boolean | null
           question: string
+          severity?: string | null
           tags?: string[] | null
+          test_type?: string | null
           updated_at?: string | null
           workspace_id: string
         }
         Update: {
           agent_id?: string | null
+          attack_category?: string | null
           category?: string
           context?: string | null
           created_at?: string | null
           created_by?: string | null
+          detection_patterns?: Json | null
           difficulty?: string | null
           expected_answer?: string
           expected_score_min?: number | null
           id?: string
           is_active?: boolean | null
           question?: string
+          severity?: string | null
           tags?: string[] | null
+          test_type?: string | null
           updated_at?: string | null
           workspace_id?: string
         }
