@@ -74,7 +74,7 @@ serve(async (req) => {
     }
 
     console.log('[generate-tenant-image] GOOGLE_GEMINI_API_KEY:', geminiApiKey ? 'CONFIGURED' : 'MISSING');
-    console.log('[generate-tenant-image] Model: gemini-2.5-flash (image generation)');
+    console.log('[generate-tenant-image] Model: gemini-2.5-flash-image-preview (Nano banana)');
 
     // Use retry with backoff for API calls
     const aiResponse = await retryWithBackoff(async () => {
@@ -82,15 +82,15 @@ serve(async (req) => {
       const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
       
       try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
         const requestBody = {
           contents: [{
             parts: [{
-              text: `Generate an image based on this description: ${prompt}`
+              text: `Generate an image: ${prompt}`
             }]
           }],
           generationConfig: {
-            response_modalities: ["image"]
+            responseMimeType: "image/png"
           }
         };
 

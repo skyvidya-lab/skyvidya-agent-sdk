@@ -24,7 +24,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { batch_id, workspace_id, agent_ids, test_case_ids, concurrency = 3 }: BatchExecutionRequest = await req.json();
+    const { batch_id, workspace_id, agent_ids, test_case_ids, concurrency = 1 }: BatchExecutionRequest = await req.json();
 
     console.log(`Starting batch execution ${batch_id}: ${agent_ids.length} agents x ${test_case_ids.length} tests`);
 
@@ -136,10 +136,25 @@ serve(async (req) => {
               }
             });
 
-            if (callError) throw new Error(`Agent call failed: ${callError.message}`);
+            const callLatencyMs = Date.now() - callStartTime;
+
+            // If agent call failed, save error message and skip validation
+            if (callError) {
+              const errorMsg = `[ERRO] ${callError.message}`;
+              await supabase
+                .from('test_executions')
+                .update({
+                  actual_answer: errorMsg,
+                  status: 'failed',
+                  latency_ms: callLatencyMs
+                })
+                .eq('id', execution.id);
+              
+              throw new Error(`Agent call failed: ${callError.message}`);
+            }
+
             if (!agentResponse) throw new Error('Agent returned no response');
 
-            const callLatencyMs = Date.now() - callStartTime;
             const actual_answer = agentResponse.message || agentResponse.answer || null;
 
             console.log('Agent response:', {
@@ -225,6 +240,12 @@ serve(async (req) => {
       );
 
       await Promise.allSettled(batchPromises);
+
+      // Add delay between batches to avoid rate limits (2.5 seconds)
+      if (i + concurrency < test_case_ids.length) {
+        console.log('Waiting 2.5s before next batch to avoid rate limits...');
+        await new Promise(resolve => setTimeout(resolve, 2500));
+      }
     }
 
     // Mark batch as completed

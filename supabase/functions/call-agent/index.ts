@@ -338,7 +338,23 @@ async function callDifyAgent(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Dify API error:', response.status, errorText);
+    console.error('[call-agent] Dify response status:', response.status);
+    console.error('[call-agent] Dify error body:', errorText);
+    console.error('[call-agent] Rate limit remaining:', response.headers.get('x-ratelimit-remaining'));
+    console.error('[call-agent] Rate limit reset:', response.headers.get('x-ratelimit-reset'));
+    
+    // Parse error details
+    try {
+      const errorData = JSON.parse(errorText);
+      console.error('[call-agent] Parsed error:', errorData);
+      
+      // Check for rate limit error
+      if (errorData.message?.includes('rate limit')) {
+        throw new Error('RATE_LIMIT: ' + errorData.message);
+      }
+    } catch (e) {
+      // Continue if JSON parse fails
+    }
     
     // Se for 404 (conversa não existe), lançar erro específico
     if (response.status === 404) {
