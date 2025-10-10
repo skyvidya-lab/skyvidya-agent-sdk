@@ -67,14 +67,14 @@ serve(async (req) => {
 
     console.log(`Generating ${imageType} for ${context} (${identifier}) with prompt:`, prompt);
 
-    // Use Lovable AI Gateway for image generation
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    // Use Google Gemini API directly
+    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
     }
 
-    console.log('[generate-tenant-image] LOVABLE_API_KEY:', lovableApiKey ? 'CONFIGURED' : 'MISSING');
-    console.log('[generate-tenant-image] Model: google/gemini-2.5-flash-image-preview via Lovable AI');
+    console.log('[generate-tenant-image] Using Google Gemini API');
+    console.log('[generate-tenant-image] Model: gemini-2.5-flash-image-preview');
 
     // Use retry with backoff for API calls
     const aiResponse = await retryWithBackoff(async () => {
@@ -82,23 +82,22 @@ serve(async (req) => {
       const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
       
       try {
-        const apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
+        
+        // Fixed: Removed responseMimeType from generationConfig
+        // The model automatically returns the image in base64 format
         const requestBody = {
-          model: 'google/gemini-2.5-flash-image-preview',
-          messages: [{
-            role: 'user',
-            content: prompt
-          }],
-          modalities: ['image', 'text']
+          contents: [{
+            parts: [{ text: prompt }]
+          }]
         };
 
-        console.log('[DEBUG] Request URL:', apiUrl);
+        console.log('[DEBUG] Request URL:', apiUrl.replace(geminiApiKey, '***'));
         console.log('[DEBUG] Request body:', JSON.stringify(requestBody, null, 2));
 
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${lovableApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(requestBody),
@@ -106,7 +105,6 @@ serve(async (req) => {
         });
 
         console.log('[DEBUG] Response status:', response.status);
-        console.log('[DEBUG] Response headers:', Object.fromEntries(response.headers));
 
         clearTimeout(timeout);
         return response;
@@ -119,7 +117,7 @@ serve(async (req) => {
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('[DEBUG] Raw error response:', errorText);
-      console.error('Lovable AI Gateway error:', aiResponse.status, errorText);
+      console.error('Google Gemini API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -127,28 +125,27 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos ao workspace.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      throw new Error(`Lovable AI Gateway error: ${aiResponse.status}`);
+      throw new Error(`Google Gemini API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('[LOVABLE_AI] Full response:', JSON.stringify(aiData, null, 2));
+    console.log('[GEMINI_API] Response structure:', JSON.stringify(aiData, null, 2));
 
-    // Lovable AI returns images in choices[].message.images[]
-    const imageData = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!imageData || !imageData.startsWith('data:image/png;base64,')) {
-      console.error('[LOVABLE_AI] No image found. Full response:', JSON.stringify(aiData));
+    // Extract image data from Gemini response
+    const candidate = aiData.candidates?.[0];
+    if (!candidate) {
+      console.error('[GEMINI_API] No candidates found in response');
       throw new Error('Nenhuma imagem gerada pela IA');
     }
 
-    // Extract base64 data
-    const base64Data = imageData.replace('data:image/png;base64,', '');
-    console.log('[LOVABLE_AI] Image extracted successfully');
+    const inlineData = candidate.content?.parts?.[0]?.inline_data;
+    if (!inlineData || !inlineData.data) {
+      console.error('[GEMINI_API] No inline_data found in response');
+      throw new Error('Nenhuma imagem gerada pela IA');
+    }
+
+    const base64Data = inlineData.data;
+    console.log('[GEMINI_API] Image extracted successfully');
 
     // Convert base64 to buffer
     const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
