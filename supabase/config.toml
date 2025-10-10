@@ -3,6 +3,9 @@ project_id = "qwtioetvfvfflbkzbpfu"
 [functions.call-agent]
 verify_jwt = false
 
+[functions.chat-with-ai]
+verify_jwt = true
+
 [functions.validate-agent-response]
 verify_jwt = true
 
