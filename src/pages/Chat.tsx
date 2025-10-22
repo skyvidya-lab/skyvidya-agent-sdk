@@ -4,7 +4,7 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 const Chat = () => {
   return (
     <AppLayout>
-      <div className="h-full">
+      <div className="h-full max-h-full">
         <ChatInterface />
       </div>
     </AppLayout>

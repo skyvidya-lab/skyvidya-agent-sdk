@@ -31,9 +31,9 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full max-h-full overflow-hidden">
       {/* Sidebar */}
-      <div className="w-80 border-r bg-card flex flex-col">
+      <div className="w-80 border-r bg-card flex flex-col h-full overflow-hidden">
         <div className="p-4 border-b space-y-3">
           <h2 className="text-lg font-semibold">Conversas</h2>
           <AgentSelector
@@ -57,7 +57,7 @@ export function ChatInterface() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
         {selectedConversationId ? (
           <>
             <MessageList messages={messages} isLoading={isSending} />
