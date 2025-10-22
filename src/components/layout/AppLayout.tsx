@@ -1,5 +1,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { DesktopHeader } from "./DesktopHeader";
+import { MobileHeader } from "./MobileHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,7 +40,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <DesktopHeader />
+      <MobileHeader currentTenant={currentTenant} />
+      <div className="min-h-screen flex w-full pt-14 md:pt-14">
         <AppSidebar currentTenant={currentTenant} />
         <main className="flex-1 overflow-auto">
           {children}

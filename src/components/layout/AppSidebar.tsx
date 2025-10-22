@@ -35,11 +35,17 @@ const items = [
 ];
 
 export function AppSidebar({ currentTenant }: AppSidebarProps) {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
 
   const isCollapsed = state === "collapsed";
+  
+  const handleNavClick = () => {
+    if (window.innerWidth < 768) {
+      setOpenMobile?.(false);
+    }
+  };
 
   const getNavCls = (url: string) =>
     location.pathname === url ? "bg-accent text-accent-foreground" : "hover:bg-accent/50";
@@ -71,7 +77,11 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls(item.url)}>
+                    <NavLink 
+                      to={item.url} 
+                      className={getNavCls(item.url)}
+                      onClick={handleNavClick}
+                    >
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
