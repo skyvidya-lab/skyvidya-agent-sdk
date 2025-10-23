@@ -6,48 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Retry function with exponential backoff
-async function retryWithBackoff(
-  fn: () => Promise<Response>,
-  maxRetries = 3
-): Promise<Response> {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Attempt ${attempt}/${maxRetries}`);
-      const response = await fn();
-      
-      if (response.ok) {
-        console.log(`Success on attempt ${attempt}`);
-        return response;
-      }
-      
-      if (response.status === 429 && attempt < maxRetries) {
-        const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-        console.log(`Rate limit hit, retrying after ${delay}ms`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      
-      // Return response for other errors or last attempt
-      return response;
-    } catch (error) {
-      console.error(`Attempt ${attempt} failed:`, error);
-      if (attempt === maxRetries) throw error;
-      const delay = 1000 * attempt;
-      console.log(`Waiting ${delay}ms before retry`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  throw new Error('Max retries exceeded');
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Generate tenant image function called - with Google Gemini API integration');
+    console.log('Generate tenant image function called - with Lovable AI Gateway');
     const { prompt, imageType, tenantId, context = 'tenant' } = await req.json();
     
     if (!prompt || !imageType) {
@@ -67,131 +32,135 @@ serve(async (req) => {
 
     console.log(`Generating ${imageType} for ${context} (${identifier}) with prompt:`, prompt);
 
-    // Use Google Gemini API directly
-    const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
-    if (!geminiApiKey) {
-      throw new Error('GOOGLE_GEMINI_API_KEY not configured');
+    // Use Lovable AI Gateway
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('[generate-tenant-image] Using Google Gemini API');
-    console.log('[generate-tenant-image] Model: gemini-2.5-flash-image-preview');
+    console.log('[generate-tenant-image] Using Lovable AI Gateway');
+    console.log('[generate-tenant-image] Model: google/gemini-2.5-flash-image-preview');
 
-    // Use retry with backoff for API calls
-    const aiResponse = await retryWithBackoff(async () => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
-      
-      try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiApiKey}`;
-        
-        // Fixed: Removed responseMimeType from generationConfig
-        // The model automatically returns the image in base64 format
-        const requestBody = {
-          contents: [{
-            parts: [{ text: prompt }]
-          }]
-        };
-
-        console.log('[DEBUG] Request URL:', apiUrl.replace(geminiApiKey, '***'));
-        console.log('[DEBUG] Request body:', JSON.stringify(requestBody, null, 2));
-
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-          signal: controller.signal,
-        });
-
-        console.log('[DEBUG] Response status:', response.status);
-
-        clearTimeout(timeout);
-        return response;
-      } catch (error) {
-        clearTimeout(timeout);
-        throw error;
-      }
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('[DEBUG] Raw error response:', errorText);
-      console.error('Google Gemini API error:', aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit atingido. Aguarde e tente novamente.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      throw new Error(`Google Gemini API error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    console.log('[GEMINI_API] Response structure:', JSON.stringify(aiData, null, 2));
-
-    // Extract image data from Gemini response
-    const candidate = aiData.candidates?.[0];
-    if (!candidate) {
-      console.error('[GEMINI_API] No candidates found in response');
-      throw new Error('Nenhuma imagem gerada pela IA');
-    }
-
-    const inlineData = candidate.content?.parts?.[0]?.inline_data;
-    if (!inlineData || !inlineData.data) {
-      console.error('[GEMINI_API] No inline_data found in response');
-      throw new Error('Nenhuma imagem gerada pela IA');
-    }
-
-    const base64Data = inlineData.data;
-    console.log('[GEMINI_API] Image extracted successfully');
-
-    // Convert base64 to buffer
-    const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Determine bucket based on image type and context
-    const bucket = imageType === 'background' ? 'tenant-backgrounds' : 'tenant-logos';
-    const fileName = `${identifier}-${imageType}-${Date.now()}.png`;
-
-    console.log(`Uploading to bucket: ${bucket}, file: ${fileName}, context: ${context}`);
-
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, imageBuffer, {
-        contentType: 'image/png',
-        upsert: true,
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000); // 45s timeout
+    
+    try {
+      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-image-preview',
+          messages: [{
+            role: 'user',
+            content: prompt
+          }],
+          modalities: ['image', 'text']
+        }),
+        signal: controller.signal,
       });
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      throw uploadError;
-    }
+      clearTimeout(timeout);
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
+      console.log('[DEBUG] Response status:', aiResponse.status);
 
-    console.log('Image uploaded successfully:', urlData.publicUrl);
-
-    return new Response(
-      JSON.stringify({ 
-        url: urlData.publicUrl,
-        imageType,
-        message: 'Imagem gerada e salva com sucesso!'
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error('[DEBUG] Raw error response:', errorText);
+        console.error('Lovable AI Gateway error:', aiResponse.status, errorText);
+        
+        if (aiResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: 'Rate limit atingido. Aguarde e tente novamente.' }),
+            { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        if (aiResponse.status === 402) {
+          return new Response(
+            JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos ao workspace.' }),
+            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        throw new Error(`Lovable AI Gateway error: ${aiResponse.status}`);
       }
-    );
+
+      const aiData = await aiResponse.json();
+      console.log('[LOVABLE_AI] Response structure received');
+
+      // Extract image data from Lovable AI response
+      const images = aiData.choices?.[0]?.message?.images;
+      if (!images || images.length === 0) {
+        console.error('[LOVABLE_AI] No images found in response');
+        throw new Error('Nenhuma imagem gerada pela IA');
+      }
+
+      const imageUrl = images[0]?.image_url?.url;
+      if (!imageUrl || !imageUrl.startsWith('data:image/')) {
+        console.error('[LOVABLE_AI] Invalid image URL format');
+        throw new Error('Formato de imagem inválido');
+      }
+
+      // Extract base64 data from data URL
+      const base64Match = imageUrl.match(/^data:image\/\w+;base64,(.+)$/);
+      if (!base64Match) {
+        throw new Error('Failed to extract base64 data from image URL');
+      }
+      const base64Data = base64Match[1];
+      
+      console.log('[LOVABLE_AI] Image extracted successfully');
+
+      // Convert base64 to buffer
+      const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+      // Initialize Supabase client
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Determine bucket based on image type and context
+      const bucket = imageType === 'background' ? 'tenant-backgrounds' : 'tenant-logos';
+      const fileName = `${identifier}-${imageType}-${Date.now()}.png`;
+
+      console.log(`Uploading to bucket: ${bucket}, file: ${fileName}, context: ${context}`);
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, imageBuffer, {
+          contentType: 'image/png',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      console.log('Image uploaded successfully:', urlData.publicUrl);
+
+      return new Response(
+        JSON.stringify({ 
+          url: urlData.publicUrl,
+          imageType,
+          message: 'Imagem gerada e salva com sucesso!'
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+
+    } catch (error) {
+      clearTimeout(timeout);
+      throw error;
+    }
 
   } catch (error) {
     console.error('Error in generate-tenant-image:', error);

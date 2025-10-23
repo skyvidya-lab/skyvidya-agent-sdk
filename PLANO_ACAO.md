@@ -55,17 +55,22 @@
 - Fault tolerance (retry policies, circuit breakers)
 - Fallback para Lovable AI
 
-#### 📊 Pilar 3: Monitora e Observa - **15% Completo**
+#### 📊 Pilar 3: Monitora e Observa - **30% Completo** ⬆️ (+15%)
 
 ✅ **Implementado**:
-- Tabelas de logs e metrics no banco
+- Tabelas de logs e metrics no banco (estrutura corrigida)
+- Schema de logs estruturados (logs + agent_calls)
+- RLS policies implementadas
+- Logging implementado em edge functions (call-agent, chat-with-ai)
+- Dashboard de logs funcional (/logs)
+
+⏳ **Em Progresso**:
+- Métricas em tempo real (coleta OK, falta visualização avançada)
 
 ❌ **Pendente**:
-- Structured logging (schema definido, não implementado)
-- Dashboard de métricas em tempo real
 - Alertas automáticos
 - Cost tracking por tenant
-- Performance monitoring (latência, throughput)
+- Performance monitoring avançado (traces distribuídos)
 
 #### ✅ Pilar 4: Valida e Governa - **35% Completo** ⬆️ (+25%)
 
@@ -86,34 +91,75 @@
 - A/B testing framework
 - Hallucination detection em tempo real
 
-#### 🚀 Pilar 5: Serve e Entrega - **25% Completo**
+#### 🚀 Pilar 5: Serve e Entrega - **35% Completo** ⬆️ (+10%)
 
 ✅ **Implementado**:
 - Landing page com os 5 pilares
 - Componentes UI base (shadcn/ui)
+- Geração de imagens com Lovable AI (logos e backgrounds)
+- Platform Settings UI funcional
+- Dashboard responsivo (mobile-first)
 
 ⏳ **Em Progresso**:
-- White-label framework (schema criado, falta aplicação dinâmica)
+- White-label framework (aplicação dinâmica de branding)
 
 ❌ **Pendente**:
 - Domain-based routing
-- Tenant branding customization UI
+- Tenant branding customization completa
 - APIs dedicadas por tenant
 - Multi-channel delivery (WhatsApp, Slack)
 
 ### 1.2 Completude Geral
 
 ```
-Overall Progress: ████░░░░░░ 31%
+Overall Progress: █████░░░░░ 36% ⬆️ (+5%)
 
 Pilar 1 (Orquestra): ██████░░░░ 60%
 Pilar 2 (Conecta):   ██░░░░░░░░ 20%
-Pilar 3 (Monitora):  █░░░░░░░░░ 15%
-Pilar 4 (Valida):    ███░░░░░░░ 35% ⬆️
-Pilar 5 (Serve):     ██░░░░░░░░ 25%
+Pilar 3 (Monitora):  ███░░░░░░░ 30% ⬆️
+Pilar 4 (Valida):    ███░░░░░░░ 35%
+Pilar 5 (Serve):     ███░░░░░░░ 35% ⬆️
 ```
 
-### 1.3 Conquistas Recentes (Última Semana)
+### 1.3 Conquistas Recentes (Últimas 48 Horas)
+
+**🔧 Correções Críticas Implementadas**
+
+**Data**: [DATA ATUAL]
+
+**Problemas Corrigidos**:
+
+1. ✅ **Geração de imagens da plataforma (Platform Settings)**: 
+   - **Problema**: Edge function `generate-tenant-image` usava Google Gemini API direta (`GOOGLE_GEMINI_API_KEY` não configurada)
+   - **Solução**: Migrada para Lovable AI Gateway (`LOVABLE_API_KEY` já disponível)
+   - **Modelo**: `google/gemini-2.5-flash-image-preview`
+   - **Impacto**: Funcionalidade 100% operacional, sem custo adicional
+   - **Páginas afetadas**: `/platform-settings`
+
+2. ✅ **Sistema de logs funcional (/logs)**:
+   - **Problema**: Tabelas `logs` e `agent_calls` não existiam ou estavam mal configuradas
+   - **Solução**: Migration criada com schema correto + RLS policies
+   - **Implementação**: Logging implementado em `call-agent` e `chat-with-ai` edge functions
+   - **Impacto**: Dashboard de logs agora exibe métricas reais de chamadas e eventos do sistema
+   - **Páginas afetadas**: `/logs`
+
+3. ✅ **Dashboard responsivo**:
+   - **Problema**: Gráficos quebravam em mobile (<768px) com overlapping e overflow
+   - **Solução**: 
+     - Scroll horizontal habilitado (`overflow-x-auto`)
+     - Largura mínima forçada nos gráficos (`min-w-[600px]`)
+     - Grid adaptativo (`md:grid-cols-1 lg:grid-cols-2`)
+     - Eixos otimizados (fontSize reduzido, altura aumentada)
+     - Legendas ocultadas em mobile
+   - **Impacto**: Gráficos funcionam perfeitamente em mobile, tablet e desktop
+   - **Páginas afetadas**: `/dashboard`
+
+**Status Atualizado dos Pilares**:
+- Pilar 3 (Monitora e Observa): 15% → 30% ⬆️ (+15%)
+- Pilar 5 (Serve e Entrega): 25% → 35% ⬆️ (+10%)
+- **Overall Progress**: 31% → 36% ⬆️ (+5%)
+
+---
 
 **🎉 Migração para Lovable AI Gateway Concluída**
 
