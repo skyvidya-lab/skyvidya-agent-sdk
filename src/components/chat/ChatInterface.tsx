@@ -21,7 +21,11 @@ import { cn } from "@/lib/utils";
 import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+  tenantId?: string;
+}
+
+export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {}) {
   const [selectedAgentId, setSelectedAgentId] = useState<string>();
   const [selectedConversationId, setSelectedConversationId] = useState<string>();
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,9 +34,12 @@ export function ChatInterface() {
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const { tenant } = useTenantRouter();
+  
+  // Prioriza prop > tenant do router
+  const effectiveTenantId = propTenantId || tenant?.id;
   const config = tenant?.tenant_config;
 
-  const { data: agents } = useAgents(tenant?.id);
+  const { data: agents } = useAgents(effectiveTenantId);
   const { conversations, createConversation } = useConversations(selectedAgentId);
   const { messages, isSending, sendMessage, isLoading } = useChat(selectedConversationId);
 
