@@ -26,6 +26,7 @@ export function useCreateTenant() {
   return useMutation({
     mutationFn: async (tenant: any) => {
       const { 
+        enabled_agent_ids,
         secondary_color, accent_color, font_family, background_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
@@ -59,15 +60,33 @@ export function useCreateTenant() {
         })
         .select()
         .maybeSingle();
+
+      // Habilitar agentes selecionados
+      if (enabled_agent_ids && enabled_agent_ids.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const workspaceAgentRecords = enabled_agent_ids.map((agentId: string) => ({
+          workspace_id: tenantResult.id,
+          agent_id: agentId,
+          enabled: true,
+          enabled_by: user?.id,
+        }));
+
+        await supabase
+          .from("workspace_agents")
+          .insert(workspaceAgentRecords);
+      }
+
       return tenantResult;
     },
     onSuccess: async () => {
       await new Promise(resolve => setTimeout(resolve, 200));
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
-      toast.success("Tenant criado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["workspace-agents"] });
+      toast.success("Workspace criado com sucesso");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Erro ao criar tenant");
+      toast.error(error.message || "Erro ao criar workspace");
     },
   });
 }
@@ -78,6 +97,7 @@ export function useUpdateTenant() {
   return useMutation({
     mutationFn: async ({ id, ...tenant }: any) => {
       const { 
+        enabled_agent_ids,
         secondary_color, accent_color, font_family, background_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
@@ -112,15 +132,42 @@ export function useUpdateTenant() {
         }, { onConflict: "tenant_id" })
         .select()
         .maybeSingle();
+
+      // Sincronizar workspace_agents
+      if (enabled_agent_ids !== undefined) {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Remover todos os agentes atuais
+        await supabase
+          .from("workspace_agents")
+          .delete()
+          .eq("workspace_id", id);
+        
+        // Inserir novos agentes selecionados
+        if (enabled_agent_ids.length > 0) {
+          const workspaceAgentRecords = enabled_agent_ids.map((agentId: string) => ({
+            workspace_id: id,
+            agent_id: agentId,
+            enabled: true,
+            enabled_by: user?.id,
+          }));
+
+          await supabase
+            .from("workspace_agents")
+            .insert(workspaceAgentRecords);
+        }
+      }
+
       return tenantResult;
     },
     onSuccess: async () => {
       await new Promise(resolve => setTimeout(resolve, 200));
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
-      toast.success("Tenant atualizado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["workspace-agents"] });
+      toast.success("Workspace atualizado com sucesso");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Erro ao atualizar tenant");
+      toast.error(error.message || "Erro ao atualizar workspace");
     },
   });
 }

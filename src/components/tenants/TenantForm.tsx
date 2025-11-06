@@ -2,9 +2,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
-import { Upload, X, Sparkles } from "lucide-react";
+import { Upload, X, Sparkles, Bot } from "lucide-react";
 import { ImageGeneratorDialog } from "./ImageGeneratorDialog";
 import type { ImageType } from "@/lib/imagePromptTemplates";
+import { useAllAvailableAgents, useWorkspaceAgents } from "@/hooks/useWorkspaceAgents";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +69,7 @@ const tenantSchema = z.object({
   enable_guest_access: z.boolean().default(false),
   enable_file_upload: z.boolean().default(false),
   enable_conversation_export: z.boolean().default(true),
+  enabled_agent_ids: z.array(z.string()).default([]),
 });
 
 type TenantFormValues = z.infer<typeof tenantSchema>;
@@ -82,6 +87,22 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
   const [logoPreview, setLogoPreview] = useState(tenant?.logo_url || "");
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [currentImageType, setCurrentImageType] = useState<ImageType>('logo');
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase
+        .from("profiles")
+        .select("current_tenant_id")
+        .eq("id", user?.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: availableAgents, isLoading: isLoadingAgents } = useAllAvailableAgents(profile?.current_tenant_id);
+  const { data: currentWorkspaceAgents } = useWorkspaceAgents(tenant?.id);
 
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantSchema),
@@ -106,6 +127,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
       enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
       enable_conversation_export: tenant?.tenant_config?.enable_conversation_export ?? true,
+      enabled_agent_ids: currentWorkspaceAgents?.map(wa => wa.agent.id) || [],
     },
   });
 
@@ -195,10 +217,11 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="basic">Básico</TabsTrigger>
                     <TabsTrigger value="branding">Branding</TabsTrigger>
                     <TabsTrigger value="features">Recursos</TabsTrigger>
+                    <TabsTrigger value="agents">Agentes</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="basic" className="space-y-4">
@@ -522,6 +545,89 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                           <FormControl>
                             <Switch checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="agents" className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="enabled_agent_ids"
+                      render={() => (
+                        <FormItem>
+                          <div className="mb-4">
+                            <FormLabel className="text-base">Agentes Habilitados</FormLabel>
+                            <FormDescription>
+                              Selecione quais agentes estarão disponíveis neste workspace
+                            </FormDescription>
+                          </div>
+                          
+                          {isLoadingAgents && (
+                            <div className="text-sm text-muted-foreground">
+                              Carregando agentes disponíveis...
+                            </div>
+                          )}
+                          
+                          {!isLoadingAgents && (!availableAgents || availableAgents.length === 0) && (
+                            <div className="text-sm text-muted-foreground border rounded-lg p-4">
+                              Nenhum agente disponível. Crie agentes na página /agents primeiro.
+                            </div>
+                          )}
+                          
+                          <div className="space-y-2">
+                            {availableAgents?.map((agent) => (
+                              <FormField
+                                key={agent.id}
+                                control={form.control}
+                                name="enabled_agent_ids"
+                                render={({ field }) => (
+                                  <FormItem className="flex items-center justify-between rounded-lg border p-4 space-y-0">
+                                    <div className="flex items-center gap-3">
+                                      {agent.avatar_url && (
+                                        <img 
+                                          src={agent.avatar_url} 
+                                          alt={agent.name} 
+                                          className="h-10 w-10 rounded-full object-cover"
+                                        />
+                                      )}
+                                      {!agent.avatar_url && (
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                          <Bot className="h-5 w-5 text-primary" />
+                                        </div>
+                                      )}
+                                      <div>
+                                        <FormLabel className="font-medium cursor-pointer">
+                                          {agent.name}
+                                        </FormLabel>
+                                        <FormDescription className="text-xs">
+                                          {agent.description || `Plataforma: ${agent.platform}`}
+                                        </FormDescription>
+                                        {agent.is_global && (
+                                          <Badge variant="secondary" className="text-xs mt-1">
+                                            Global
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(agent.id)}
+                                        onCheckedChange={(checked) => {
+                                          const currentIds = field.value || [];
+                                          const newIds = checked
+                                            ? [...currentIds, agent.id]
+                                            : currentIds.filter((id) => id !== agent.id);
+                                          field.onChange(newIds);
+                                        }}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
