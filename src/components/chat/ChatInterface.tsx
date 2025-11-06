@@ -3,6 +3,7 @@ import { ConversationList } from "./ConversationList";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { AgentSelector } from "./AgentSelector";
+import { useWorkspaceAgents } from "@/hooks/useWorkspaceAgents";
 import { ConversationSearchInput } from "./ConversationSearchInput";
 import { useConversations } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
@@ -18,7 +19,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, PanelLeftClose, ChevronRight, AlertTriangle, SendHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -61,7 +61,8 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
   const effectiveTenant = tenant || fetchedTenant;
   const config = effectiveTenant?.tenant_config;
 
-  const { data: agents, isLoading: isLoadingAgents } = useAgents(effectiveTenantId);
+  // Fetch workspace agents (only enabled agents)
+  const { data: workspaceAgents, isLoading: isLoadingAgents } = useWorkspaceAgents(effectiveTenantId);
   
   // Debug logging temporário
   useEffect(() => {
@@ -69,12 +70,12 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
       propTenantId,
       tenantFromRouter: tenant?.id,
       effectiveTenantId,
-      agentsCount: agents?.length,
-      agentsData: agents,
+      workspaceAgentsCount: workspaceAgents?.length,
+      workspaceAgents,
       hasConfig: !!config,
       isLoadingAgents
     });
-  }, [propTenantId, tenant, effectiveTenantId, agents, config, isLoadingAgents]);
+  }, [propTenantId, tenant, effectiveTenantId, workspaceAgents, config, isLoadingAgents]);
   const { conversations, createConversation } = useConversations(selectedAgentId);
   const { messages, isSending, sendMessage, isLoading } = useChat(selectedConversationId);
 
@@ -106,7 +107,7 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
     );
   }, [conversations, searchQuery]);
 
-  const selectedAgent = agents?.find(a => a.id === selectedAgentId);
+  const selectedAgent = workspaceAgents?.find(wa => wa.agent.id === selectedAgentId)?.agent;
 
   const handleNewConversation = async () => {
     if (!selectedAgentId) return;
@@ -184,8 +185,8 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
             <SelectValue placeholder={
               isLoadingAgents 
                 ? "Carregando agentes..." 
-                : agents?.length === 0 
-                  ? "Nenhum agente disponível"
+                : !workspaceAgents || workspaceAgents.length === 0 
+                  ? "Nenhum agente habilitado"
                   : "Selecione um agente"
             } />
           </SelectTrigger>
@@ -194,16 +195,16 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
               <SelectItem value="loading" disabled>
                 Carregando...
               </SelectItem>
-            ) : agents?.length === 0 ? (
+            ) : !workspaceAgents || workspaceAgents.length === 0 ? (
               <SelectItem value="empty" disabled>
-                Nenhum agente configurado
+                Nenhum agente habilitado neste workspace
               </SelectItem>
             ) : (
-              agents?.map((agent) => (
-                <SelectItem key={agent.id} value={agent.id}>
+              workspaceAgents.map((wa) => (
+                <SelectItem key={wa.agent.id} value={wa.agent.id}>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">External</Badge>
-                    {agent.name}
+                    <Badge variant="outline">{wa.agent.platform}</Badge>
+                    {wa.agent.name}
                   </div>
                 </SelectItem>
               ))

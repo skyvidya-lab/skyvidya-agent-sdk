@@ -1,5 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useWorkspaceAgents } from "@/hooks/useWorkspaceAgents";
 import {
   Select,
   SelectContent,
@@ -9,24 +8,13 @@ import {
 } from "@/components/ui/select";
 
 interface AgentSelectorProps {
+  workspaceId: string;
   selectedAgentId?: string;
   onSelectAgent: (agentId: string) => void;
 }
 
-export function AgentSelector({ selectedAgentId, onSelectAgent }: AgentSelectorProps) {
-  const { data: agents, isLoading } = useQuery({
-    queryKey: ["agents-all"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("agents")
-        .select("*")
-        .eq("status", "active")
-        .order("name");
-      
-      if (error) throw error;
-      return data;
-    },
-  });
+export function AgentSelector({ workspaceId, selectedAgentId, onSelectAgent }: AgentSelectorProps) {
+  const { data: workspaceAgents, isLoading } = useWorkspaceAgents(workspaceId);
 
   return (
     <Select value={selectedAgentId} onValueChange={onSelectAgent}>
@@ -38,14 +26,14 @@ export function AgentSelector({ selectedAgentId, onSelectAgent }: AgentSelectorP
           <SelectItem value="loading" disabled>
             Carregando...
           </SelectItem>
-        ) : agents?.length === 0 ? (
+        ) : !workspaceAgents || workspaceAgents.length === 0 ? (
           <SelectItem value="empty" disabled>
-            Nenhum agente disponível
+            Nenhum agente habilitado neste workspace
           </SelectItem>
         ) : (
-          agents?.map((agent) => (
-            <SelectItem key={agent.id} value={agent.id}>
-              {agent.name}
+          workspaceAgents.map((wa) => (
+            <SelectItem key={wa.agent.id} value={wa.agent.id}>
+              {wa.agent.name}
             </SelectItem>
           ))
         )}

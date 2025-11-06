@@ -155,6 +155,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          is_global: boolean | null
           knowledge_base: string | null
           max_tokens: number | null
           model_name: string | null
@@ -165,7 +166,7 @@ export type Database = {
           status: Database["public"]["Enums"]["agent_status"] | null
           system_prompt: string | null
           temperature: number | null
-          tenant_id: string
+          tenant_id: string | null
           training_examples: Json | null
           updated_at: string | null
           version: number | null
@@ -180,6 +181,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          is_global?: boolean | null
           knowledge_base?: string | null
           max_tokens?: number | null
           model_name?: string | null
@@ -190,7 +192,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           temperature?: number | null
-          tenant_id: string
+          tenant_id?: string | null
           training_examples?: Json | null
           updated_at?: string | null
           version?: number | null
@@ -205,6 +207,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          is_global?: boolean | null
           knowledge_base?: string | null
           max_tokens?: number | null
           model_name?: string | null
@@ -215,7 +218,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           temperature?: number | null
-          tenant_id?: string
+          tenant_id?: string | null
           training_examples?: Json | null
           updated_at?: string | null
           version?: number | null
@@ -1323,6 +1326,54 @@ export type Database = {
           {
             foreignKeyName: "user_roles_tenant_id_fkey"
             columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_agents: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          custom_config: Json | null
+          enabled: boolean | null
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          custom_config?: Json | null
+          enabled?: boolean | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          custom_config?: Json | null
+          enabled?: boolean | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_agents_workspace_id_fkey"
+            columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]

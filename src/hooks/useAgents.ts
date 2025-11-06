@@ -12,6 +12,8 @@ export function useAgents(tenantId?: string) {
         .select("*")
         .order("created_at", { ascending: false });
       
+      // Busca agentes do tenant específico (não busca globais aqui)
+      // Para ver agentes disponíveis (globais + tenant), use useAllAvailableAgents
       if (tenantId) {
         query = query.eq("tenant_id", tenantId);
       }
