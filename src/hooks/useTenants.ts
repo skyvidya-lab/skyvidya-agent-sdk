@@ -41,6 +41,19 @@ export function useCreateTenant() {
       
       if (tenantError) throw tenantError;
 
+      // Criar role de super_admin automaticamente para o criador do workspace
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user?.id) {
+        await supabase
+          .from("user_roles")
+          .insert({
+            user_id: user.id,
+            tenant_id: tenantResult.id,
+            role: 'super_admin',
+          });
+      }
+
       await supabase
         .from("tenant_config")
         .insert({
