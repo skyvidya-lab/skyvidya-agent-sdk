@@ -1,25 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ConversationList } from "./ConversationList";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { AgentSelector } from "./AgentSelector";
+import { ConversationSearchInput } from "./ConversationSearchInput";
 import { useConversations } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { useTenantRouter } from "@/hooks/useTenantRouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { PlusCircle, PanelLeftClose } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, PanelLeftClose, ChevronRight, AlertTriangle, SendHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAgents } from "@/hooks/useAgents";
+import { format } from "date-fns";
 
 export function ChatInterface() {
   const [selectedAgentId, setSelectedAgentId] = useState<string>();
   const [selectedConversationId, setSelectedConversationId] = useState<string>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [agentInfoOpen, setAgentInfoOpen] = useState(true);
+  const [newMessageInput, setNewMessageInput] = useState("");
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const { tenant } = useTenantRouter();
   const config = tenant?.tenant_config;
 
+  const { data: agents } = useAgents(tenant?.id);
   const { conversations, createConversation } = useConversations(selectedAgentId);
   const { messages, isSending, sendMessage, isLoading } = useChat(selectedConversationId);
 
@@ -39,6 +52,20 @@ export function ChatInterface() {
     }
   }, [isSidebarOpen, isMobile]);
 
+  // Filtrar conversas pela busca
+  const filteredConversations = useMemo(() => {
+    if (!conversations) return [];
+    if (!searchQuery.trim()) return conversations;
+    
+    const query = searchQuery.toLowerCase();
+    return conversations.filter(conv => 
+      conv.title?.toLowerCase().includes(query) ||
+      conv.last_message_preview?.toLowerCase().includes(query)
+    );
+  }, [conversations, searchQuery]);
+
+  const selectedAgent = agents?.find(a => a.id === selectedAgentId);
+
   const handleNewConversation = async () => {
     if (!selectedAgentId) return;
     const newConv = await createConversation({ agentId: selectedAgentId });
@@ -47,7 +74,6 @@ export function ChatInterface() {
 
   const handleSendMessage = async (content: string, attachments?: File[]) => {
     if (!selectedAgentId || !selectedConversationId) return;
-    // TODO: Handle attachments when storage is set up
     await sendMessage(content, selectedAgentId);
   };
 
@@ -56,6 +82,116 @@ export function ChatInterface() {
     if (isMobile) setIsSidebarOpen(false);
   };
 
+  const handleStartNewChat = async () => {
+    if (!selectedAgentId || !newMessageInput.trim()) return;
+    
+    const newConv = await createConversation({ agentId: selectedAgentId });
+    setSelectedConversationId(newConv.id);
+    
+    // Enviar primeira mensagem
+    await sendMessage(newMessageInput, selectedAgentId);
+    setNewMessageInput("");
+  };
+
+  const SidebarContent = () => (
+    <>
+      <div className="p-4 border-b space-y-3">
+        <Button
+          onClick={handleNewConversation}
+          disabled={!selectedAgentId}
+          className="w-full"
+        >
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Novo Chat
+        </Button>
+
+        {/* Busca */}
+        <ConversationSearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
+      </div>
+
+      {/* Informações do Agente */}
+      <Collapsible open={agentInfoOpen} onOpenChange={setAgentInfoOpen}>
+        <CollapsibleTrigger className="flex items-center gap-2 p-4 w-full hover:bg-muted/50 border-b">
+          <ChevronRight className={cn("h-4 w-4 transition-transform", agentInfoOpen && "rotate-90")} />
+          <span className="font-medium flex items-center gap-2">
+            ⚡ Agente IA
+            {selectedAgent && <Badge variant="default" className="ml-auto bg-green-500">ATIVO</Badge>}
+          </span>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium mb-2">Sistema Inteligente</p>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+              <li>Processamento de linguagem natural</li>
+              <li>Base de conhecimento especializada</li>
+              <li>Respostas contextualizadas</li>
+              <li>Análise inteligente de documentos</li>
+            </ul>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Seletor de Agente */}
+      <div className="px-4 py-3 border-b bg-muted/30">
+        <Label className="text-xs text-muted-foreground mb-2 block">Agente Ativo</Label>
+        <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione um agente" />
+          </SelectTrigger>
+          <SelectContent>
+            {agents?.map(agent => (
+              <SelectItem key={agent.id} value={agent.id}>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">External</Badge>
+                  {agent.name}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Lista de Conversas */}
+      <ScrollArea className="flex-1">
+        <div className="space-y-1 p-2">
+          {filteredConversations.length === 0 && searchQuery && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Nenhuma conversa encontrada
+            </p>
+          )}
+          {filteredConversations.map(conv => (
+            <button
+              key={conv.id}
+              onClick={() => handleSelectConversation(conv.id)}
+              className={cn(
+                "w-full text-left p-3 rounded-lg hover:bg-muted/50 transition-colors",
+                selectedConversationId === conv.id && "bg-muted"
+              )}
+            >
+              <div className="flex items-start gap-2">
+                <span className="text-lg">{conv.emoji_icon || '💬'}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">
+                    {conv.title || "Nova conversa"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {conv.last_message_preview || "Sem mensagens"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {format(new Date(conv.updated_at), "d MMM yyyy, HH:mm")}
+                  </p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </ScrollArea>
+    </>
+  );
+
   return (
     <div className="flex h-full max-h-full overflow-hidden">
       {/* Sidebar Desktop - Colapsável */}
@@ -63,30 +199,7 @@ export function ChatInterface() {
         "hidden md:flex border-r bg-card flex-col h-full overflow-hidden transition-all duration-300",
         isSidebarOpen ? "w-80" : "w-0"
       )}>
-        {isSidebarOpen && (
-          <>
-            <div className="p-4 border-b space-y-3">
-              <h2 className="text-lg font-semibold">Conversas</h2>
-              <AgentSelector
-                selectedAgentId={selectedAgentId}
-                onSelectAgent={setSelectedAgentId}
-              />
-              <Button
-                onClick={handleNewConversation}
-                disabled={!selectedAgentId}
-                className="w-full"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Nova Conversa
-              </Button>
-            </div>
-            <ConversationList
-              conversations={conversations || []}
-              selectedId={selectedConversationId}
-              onSelect={setSelectedConversationId}
-            />
-          </>
-        )}
+        {isSidebarOpen && <SidebarContent />}
       </div>
 
       {/* Sidebar Mobile - Sheet */}
@@ -96,25 +209,7 @@ export function ChatInterface() {
             <SheetTitle>Conversas</SheetTitle>
           </SheetHeader>
           <div className="flex flex-col h-[calc(100%-5rem)] overflow-hidden">
-            <div className="p-4 border-b space-y-3">
-              <AgentSelector
-                selectedAgentId={selectedAgentId}
-                onSelectAgent={setSelectedAgentId}
-              />
-              <Button
-                onClick={handleNewConversation}
-                disabled={!selectedAgentId}
-                className="w-full"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Nova Conversa
-              </Button>
-            </div>
-            <ConversationList
-              conversations={conversations || []}
-              selectedId={selectedConversationId}
-              onSelect={handleSelectConversation}
-            />
+            <SidebarContent />
           </div>
         </SheetContent>
       </Sheet>
@@ -140,37 +235,93 @@ export function ChatInterface() {
         {selectedConversationId ? (
           <>
             <MessageList messages={messages} isLoading={isSending} />
-            <ChatInput 
-              onSend={handleSendMessage} 
-              disabled={isSending}
-              placeholder={config?.chat_placeholder || "Digite sua mensagem..."}
-              enableFileUpload={config?.enable_file_upload || false}
-            />
+            <div className="border-t">
+              <ChatInput 
+                onSend={handleSendMessage} 
+                disabled={isSending}
+                placeholder={config?.chat_placeholder || "Digite sua mensagem..."}
+                enableFileUpload={config?.enable_file_upload || false}
+              />
+              {/* Disclaimer */}
+              <div className="px-4 py-2 bg-muted/30 border-t">
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <AlertTriangle className="h-3 w-3" />
+                  O assistente pode cometer erros. Considere verificar informações importantes.
+                </p>
+              </div>
+            </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-4 max-w-md p-8">
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-background to-muted/20">
+            <div className="text-center space-y-8 max-w-3xl p-8">
+              {/* Logo Grande */}
               {config?.logo_url && (
                 <img 
                   src={config.logo_url} 
                   alt="Logo" 
-                  className="h-16 mx-auto mb-4 object-contain"
+                  className="h-24 mx-auto mb-6 object-contain animate-fade-in"
                 />
               )}
-              <div>
-                <h2 className="text-2xl font-bold mb-2">
-                  {config?.welcome_message?.title || config?.hero_title || "Bem-vindo"}
-                </h2>
-                <p className="text-muted-foreground">
-                  {config?.welcome_message?.subtitle || config?.hero_subtitle || "Selecione um agente e inicie uma conversa"}
+              
+              {/* Título e Subtítulo */}
+              <div className="space-y-3 animate-fade-in">
+                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                  {tenant?.name}
+                </h1>
+                <p className="text-muted-foreground text-sm md:text-base">
+                  {config?.hero_subtitle || "Quem ama a cidade planeja o futuro com ela"}
                 </p>
               </div>
+              
+              {/* Heading Principal */}
+              <div className="space-y-4 mt-12 animate-fade-in">
+                <h2 className="text-4xl md:text-5xl font-bold">
+                  Como posso ajudar você hoje?
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Faça perguntas sobre {config?.hero_subtitle || "o sistema"}
+                </p>
+              </div>
+              
+              {/* Input Grande para Nova Conversa */}
               {selectedAgentId && (
-                <Button onClick={handleNewConversation} size="lg" className="mt-4">
-                  <PlusCircle className="mr-2 h-5 w-5" />
-                  Iniciar Nova Conversa
-                </Button>
+                <div className="mt-12 max-w-3xl mx-auto animate-scale-in">
+                  <div className="relative">
+                    <Input
+                      placeholder={config?.chat_placeholder || "Digite sua mensagem..."}
+                      className="h-14 text-lg pr-14 shadow-lg"
+                      value={newMessageInput}
+                      onChange={(e) => setNewMessageInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && newMessageInput.trim()) {
+                          e.preventDefault();
+                          handleStartNewChat();
+                        }
+                      }}
+                    />
+                    <Button 
+                      size="icon" 
+                      className="absolute right-2 top-2 h-10 w-10"
+                      onClick={handleStartNewChat}
+                      disabled={!newMessageInput.trim()}
+                    >
+                      <SendHorizontal className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
               )}
+              
+              {!selectedAgentId && (
+                <p className="text-sm text-muted-foreground mt-8">
+                  Selecione um agente na barra lateral para começar
+                </p>
+              )}
+              
+              {/* Disclaimer */}
+              <p className="text-xs text-muted-foreground mt-8 flex items-center justify-center gap-2 opacity-70">
+                <AlertTriangle className="h-3 w-3" />
+                O assistente pode cometer erros. Considere verificar informações importantes.
+              </p>
             </div>
           </div>
         )}
