@@ -20,6 +20,8 @@ import { PlusCircle, PanelLeftClose, ChevronRight, AlertTriangle, SendHorizontal
 import { cn } from "@/lib/utils";
 import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface ChatInterfaceProps {
   tenantId?: string;
@@ -37,9 +39,42 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
   
   // Prioriza prop > tenant do router
   const effectiveTenantId = propTenantId || tenant?.id;
-  const config = tenant?.tenant_config;
+  
+  // Buscar tenant completo se apenas tenantId foi fornecido (rotas administrativas)
+  const { data: fetchedTenant } = useQuery({
+    queryKey: ["tenant-for-chat", effectiveTenantId],
+    queryFn: async () => {
+      if (!effectiveTenantId) return null;
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("*, tenant_config(*)")
+        .eq("id", effectiveTenantId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!effectiveTenantId && !tenant,
+  });
 
-  const { data: agents } = useAgents(effectiveTenantId);
+  // Usar tenant do router OU o buscado
+  const effectiveTenant = tenant || fetchedTenant;
+  const config = effectiveTenant?.tenant_config;
+
+  const { data: agents, isLoading: isLoadingAgents } = useAgents(effectiveTenantId);
+  
+  // Debug logging temporário
+  useEffect(() => {
+    console.log('[ChatInterface] Debug:', {
+      propTenantId,
+      tenantFromRouter: tenant?.id,
+      effectiveTenantId,
+      agentsCount: agents?.length,
+      agentsData: agents,
+      hasConfig: !!config,
+      isLoadingAgents
+    });
+  }, [propTenantId, tenant, effectiveTenantId, agents, config, isLoadingAgents]);
   const { conversations, createConversation } = useConversations(selectedAgentId);
   const { messages, isSending, sendMessage, isLoading } = useChat(selectedConversationId);
 
@@ -146,17 +181,33 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
         <Label className="text-xs text-muted-foreground mb-2 block">Agente Ativo</Label>
         <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
           <SelectTrigger>
-            <SelectValue placeholder="Selecione um agente" />
+            <SelectValue placeholder={
+              isLoadingAgents 
+                ? "Carregando agentes..." 
+                : agents?.length === 0 
+                  ? "Nenhum agente disponível"
+                  : "Selecione um agente"
+            } />
           </SelectTrigger>
           <SelectContent>
-            {agents?.map(agent => (
-              <SelectItem key={agent.id} value={agent.id}>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">External</Badge>
-                  {agent.name}
-                </div>
+            {isLoadingAgents ? (
+              <SelectItem value="loading" disabled>
+                Carregando...
               </SelectItem>
-            ))}
+            ) : agents?.length === 0 ? (
+              <SelectItem value="empty" disabled>
+                Nenhum agente configurado
+              </SelectItem>
+            ) : (
+              agents?.map((agent) => (
+                <SelectItem key={agent.id} value={agent.id}>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">External</Badge>
+                    {agent.name}
+                  </div>
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -273,7 +324,7 @@ export function ChatInterface({ tenantId: propTenantId }: ChatInterfaceProps = {
               {/* Título e Subtítulo */}
               <div className="space-y-3 animate-fade-in">
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                  {tenant?.name}
+                  {effectiveTenant?.name}
                 </h1>
                 <p className="text-muted-foreground text-sm md:text-base">
                   {config?.hero_subtitle || "Quem ama a cidade planeja o futuro com ela"}

@@ -8,7 +8,7 @@ import { MessageSquare } from "lucide-react";
 const Chat = () => {
   const { user } = useAuth();
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -25,7 +25,14 @@ const Chat = () => {
 
   return (
     <AppLayout>
-      {profile?.current_tenant_id ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Carregando workspace...</p>
+          </div>
+        </div>
+      ) : profile?.current_tenant_id ? (
         <div className="h-full max-h-full">
           <ChatInterface tenantId={profile.current_tenant_id} />
         </div>
