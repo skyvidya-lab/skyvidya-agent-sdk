@@ -477,9 +477,11 @@ export type Database = {
         Row: {
           agent_id: string
           created_at: string | null
+          emoji_icon: string | null
           external_session_id: string | null
           id: string
           is_active: boolean | null
+          last_message_preview: string | null
           metadata: Json | null
           tenant_id: string
           title: string | null
@@ -489,9 +491,11 @@ export type Database = {
         Insert: {
           agent_id: string
           created_at?: string | null
+          emoji_icon?: string | null
           external_session_id?: string | null
           id?: string
           is_active?: boolean | null
+          last_message_preview?: string | null
           metadata?: Json | null
           tenant_id: string
           title?: string | null
@@ -501,9 +505,11 @@ export type Database = {
         Update: {
           agent_id?: string
           created_at?: string | null
+          emoji_icon?: string | null
           external_session_id?: string | null
           id?: string
           is_active?: boolean | null
+          last_message_preview?: string | null
           metadata?: Json | null
           tenant_id?: string
           title?: string | null
