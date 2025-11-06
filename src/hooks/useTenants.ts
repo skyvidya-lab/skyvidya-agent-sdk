@@ -109,9 +109,10 @@ export function useUpdateTenant() {
         .update(tenantData)
         .eq("id", id)
         .select()
-        .single();
+        .maybeSingle();
       
       if (tenantError) throw tenantError;
+      if (!tenantResult) throw new Error("Workspace não encontrado ou sem permissão");
 
       await supabase
         .from("tenant_config")
@@ -167,7 +168,12 @@ export function useUpdateTenant() {
       toast.success("Workspace atualizado com sucesso");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Erro ao atualizar workspace");
+      console.error("Erro ao atualizar workspace:", error);
+      toast.error(
+        error.message === "Workspace não encontrado ou sem permissão"
+          ? error.message
+          : "Erro ao atualizar workspace. Verifique suas permissões."
+      );
     },
   });
 }

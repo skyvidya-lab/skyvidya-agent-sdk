@@ -127,7 +127,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
       enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
       enable_conversation_export: tenant?.tenant_config?.enable_conversation_export ?? true,
-      enabled_agent_ids: currentWorkspaceAgents?.map(wa => wa.agent.id) || [],
+      enabled_agent_ids: currentWorkspaceAgents?.filter(wa => wa.agent?.id)?.map(wa => wa.agent.id) || [],
     },
   });
 
