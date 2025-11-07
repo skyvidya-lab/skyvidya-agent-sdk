@@ -122,7 +122,8 @@ export function ChatInterface({
   const handleNewConversation = async () => {
     if (!selectedAgentId) return;
     const newConv = await createConversation({
-      agentId: selectedAgentId
+      agentId: selectedAgentId,
+      isPlayground
     });
     setSelectedConversationId(newConv.id);
   };
@@ -137,7 +138,8 @@ export function ChatInterface({
   const handleStartNewChat = async () => {
     if (!selectedAgentId || !newMessageInput.trim()) return;
     const newConv = await createConversation({
-      agentId: selectedAgentId
+      agentId: selectedAgentId,
+      isPlayground
     });
     setSelectedConversationId(newConv.id);
 

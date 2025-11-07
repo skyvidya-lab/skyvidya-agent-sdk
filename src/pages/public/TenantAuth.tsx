@@ -26,8 +26,8 @@ export function TenantAuth({ tenant }: TenantAuthProps) {
   const [showSignup, setShowSignup] = useState(false);
   const [showInterest, setShowInterest] = useState(false);
 
-  // Aplicar tema do tenant (somente em rotas públicas)
-  useTenantTheme(tenant, true);
+  // Aplicar tema do tenant (no container específico)
+  useTenantTheme(tenant, '.tenant-page-container');
 
   const [loginData, setLoginData] = useState({ email: '', password: '' });
 
@@ -60,7 +60,7 @@ export function TenantAuth({ tenant }: TenantAuthProps) {
   return (
     <>
       <div 
-        className="min-h-screen flex items-center justify-center p-4"
+        className="tenant-page-container min-h-screen flex items-center justify-center p-4"
         style={{
           backgroundImage: config?.background_image_url 
             ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(${config.background_image_url})`

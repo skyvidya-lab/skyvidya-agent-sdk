@@ -28,8 +28,8 @@ export function TenantChat({ tenant }: TenantChatProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Aplicar tema do tenant (somente em rotas públicas)
-  useTenantTheme(tenant, true);
+  // Aplicar tema do tenant (no container específico)
+  useTenantTheme(tenant, '.tenant-page-container');
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,7 +55,7 @@ export function TenantChat({ tenant }: TenantChatProps) {
   );
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="tenant-page-container h-screen flex flex-col">
       {/* Header Customizado */}
       <header 
         className="border-b backdrop-blur supports-[backdrop-filter]:bg-primary/95"

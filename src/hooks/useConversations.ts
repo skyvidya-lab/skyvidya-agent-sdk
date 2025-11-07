@@ -27,24 +27,44 @@ export function useConversations(agentId?: string) {
   });
 
   const createConversation = useMutation({
-    mutationFn: async ({ agentId, title }: { agentId: string; title?: string }) => {
+    mutationFn: async ({ agentId, title, isPlayground }: { 
+      agentId: string; 
+      title?: string;
+      isPlayground?: boolean;
+    }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_tenant_id")
-        .eq("id", user.id)
-        .single();
+      let tenantId: string | null = null;
 
-      if (!profile?.current_tenant_id) throw new Error("No tenant selected");
+      if (!isPlayground) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("current_tenant_id")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile?.current_tenant_id) throw new Error("No tenant selected");
+        tenantId = profile.current_tenant_id;
+      } else {
+        // Playground: buscar o tenant_id do agente selecionado
+        const { data: agent } = await supabase
+          .from("agents")
+          .select("tenant_id")
+          .eq("id", agentId)
+          .single();
+        
+        tenantId = agent?.tenant_id || null;
+      }
+
+      if (!tenantId) throw new Error("Could not determine tenant for conversation");
 
       const { data, error } = await supabase
         .from("conversations")
         .insert({
           agent_id: agentId,
           user_id: user.id,
-          tenant_id: profile.current_tenant_id,
+          tenant_id: tenantId,
           title: title || "Nova Conversa",
         })
         .select()
