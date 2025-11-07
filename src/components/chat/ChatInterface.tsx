@@ -282,9 +282,7 @@ export function ChatInterface({
                   </div>
                 </div>}
               
-              {!selectedAgentId && <p className="text-sm text-muted-foreground mt-8">
-                  Selecione um agente na barra lateral para começar
-                </p>}
+              {!selectedAgentId}
               
               {/* Disclaimer */}
               <p className="text-xs text-muted-foreground mt-8 flex items-center justify-center gap-2 opacity-70">
