@@ -578,32 +578,32 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                           <div className="space-y-2">
                             {availableAgents?.map((agent) => (
                               <FormField
-                                key={agent.id}
+                                key={agent.agent.id}
                                 control={form.control}
                                 name="enabled_agent_ids"
                                 render={({ field }) => (
                                   <FormItem className="flex items-center justify-between rounded-lg border p-4 space-y-0">
                                     <div className="flex items-center gap-3">
-                                      {agent.avatar_url && (
+                                      {agent.agent.avatar_url && (
                                         <img 
-                                          src={agent.avatar_url} 
-                                          alt={agent.name} 
+                                          src={agent.agent.avatar_url} 
+                                          alt={agent.agent.name} 
                                           className="h-10 w-10 rounded-full object-cover"
                                         />
                                       )}
-                                      {!agent.avatar_url && (
+                                      {!agent.agent.avatar_url && (
                                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                                           <Bot className="h-5 w-5 text-primary" />
                                         </div>
                                       )}
                                       <div>
                                         <FormLabel className="font-medium cursor-pointer">
-                                          {agent.name}
+                                          {agent.agent.name}
                                         </FormLabel>
                                         <FormDescription className="text-xs">
-                                          {agent.description || `Plataforma: ${agent.platform}`}
+                                          {agent.agent.description || `Plataforma: ${agent.agent.platform}`}
                                         </FormDescription>
-                                        {agent.is_global && (
+                                        {agent.agent.is_global && (
                                           <Badge variant="secondary" className="text-xs mt-1">
                                             Global
                                           </Badge>
@@ -612,12 +612,12 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                                     </div>
                                     <FormControl>
                                       <Checkbox
-                                        checked={field.value?.includes(agent.id)}
+                                        checked={field.value?.includes(agent.agent.id)}
                                         onCheckedChange={(checked) => {
                                           const currentIds = field.value || [];
                                           const newIds = checked
-                                            ? [...currentIds, agent.id]
-                                            : currentIds.filter((id) => id !== agent.id);
+                                            ? [...currentIds, agent.agent.id]
+                                            : currentIds.filter((id) => id !== agent.agent.id);
                                           field.onChange(newIds);
                                         }}
                                       />

@@ -3,10 +3,13 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 
 const Chat = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const isPlayground = location.pathname === '/playground';
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -25,7 +28,11 @@ const Chat = () => {
 
   return (
     <AppLayout>
-      {isLoading ? (
+      {isPlayground ? (
+        <div className="h-full max-h-full">
+          <ChatInterface isPlayground={true} />
+        </div>
+      ) : isLoading ? (
         <div className="flex items-center justify-center h-full">
           <div className="text-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>

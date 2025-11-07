@@ -3,7 +3,7 @@ import { ConversationList } from "./ConversationList";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 import { AgentSelector } from "./AgentSelector";
-import { useWorkspaceAgents } from "@/hooks/useWorkspaceAgents";
+import { useWorkspaceAgents, useAllAvailableAgents } from "@/hooks/useWorkspaceAgents";
 import { ConversationSearchInput } from "./ConversationSearchInput";
 import { useConversations } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
@@ -24,9 +24,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 interface ChatInterfaceProps {
   tenantId?: string;
+  isPlayground?: boolean;
 }
 export function ChatInterface({
-  tenantId: propTenantId
+  tenantId: propTenantId,
+  isPlayground = false
 }: ChatInterfaceProps = {}) {
   const [selectedAgentId, setSelectedAgentId] = useState<string>();
   const [selectedConversationId, setSelectedConversationId] = useState<string>();
@@ -63,11 +65,13 @@ export function ChatInterface({
   const effectiveTenant = tenant || fetchedTenant;
   const config = effectiveTenant?.tenant_config;
 
-  // Fetch workspace agents (only enabled agents)
+  // Fetch agents based on context (playground vs workspace)
   const {
     data: workspaceAgents,
     isLoading: isLoadingAgents
-  } = useWorkspaceAgents(effectiveTenantId);
+  } = isPlayground 
+    ? useAllAvailableAgents() 
+    : useWorkspaceAgents(effectiveTenantId);
 
   // Debug logging temporário
   useEffect(() => {

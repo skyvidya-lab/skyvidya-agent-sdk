@@ -55,9 +55,16 @@ export function useAllAvailableAgents(tenantId?: string) {
       
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      
+      // Transform to match workspace_agents structure
+      return data?.map(agent => ({
+        id: `all-${agent.id}`,
+        enabled: true,
+        custom_config: null,
+        agent: agent
+      })) || [];
     },
-    enabled: !!tenantId,
+    enabled: tenantId !== undefined, // Allow fetching even without tenantId for playground
   });
 }
 
