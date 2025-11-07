@@ -255,9 +255,7 @@ export function ChatInterface({
                 <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
                   {effectiveTenant?.name}
                 </h1>
-                <p className="text-muted-foreground text-sm md:text-base">
-                  {config?.hero_subtitle || "Quem ama a cidade planeja o futuro com ela"}
-                </p>
+                
               </div>
               
               {/* Heading Principal */}
