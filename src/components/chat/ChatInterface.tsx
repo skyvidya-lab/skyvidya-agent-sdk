@@ -265,8 +265,7 @@ export function ChatInterface({
                 <h2 className="text-4xl md:text-5xl font-bold">
                   Como posso ajudar você hoje?
                 </h2>
-                <p className="text-lg text-muted-foreground">
-                  Faça perguntas sobre {config?.hero_subtitle || "o sistema"}
+                <p className="text-lg text-muted-foreground">Faça perguntas sobre nossos serviços{config?.hero_subtitle || "o sistema"}
                 </p>
               </div>
               
