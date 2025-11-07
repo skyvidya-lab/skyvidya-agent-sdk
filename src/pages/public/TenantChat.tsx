@@ -28,8 +28,8 @@ export function TenantChat({ tenant }: TenantChatProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Aplicar tema do tenant
-  useTenantTheme(tenant);
+  // Aplicar tema do tenant (somente em rotas públicas)
+  useTenantTheme(tenant, true);
 
   const handleSignOut = async () => {
     await signOut();

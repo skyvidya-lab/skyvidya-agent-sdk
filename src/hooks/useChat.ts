@@ -42,7 +42,14 @@ export function useChat(conversationId?: string) {
     const startTime = Date.now();
 
     try {
+      console.log('[useChat] Starting message send:', { 
+        conversationId, 
+        agentId, 
+        contentLength: content.length 
+      });
+
       // Insert user message
+      console.log('[useChat] Inserting user message...');
       const { data: userMessage, error: userError } = await supabase
         .from("messages")
         .insert({
@@ -53,7 +60,12 @@ export function useChat(conversationId?: string) {
         .select()
         .single();
 
-      if (userError) throw userError;
+      if (userError) {
+        console.error('[useChat] Error inserting user message:', userError);
+        throw userError;
+      }
+      
+      console.log('[useChat] User message inserted successfully:', userMessage);
 
       // Optimistically update UI
       queryClient.setQueryData(
@@ -62,6 +74,7 @@ export function useChat(conversationId?: string) {
       );
 
       // Call agent
+      console.log('[useChat] Calling agent edge function...', { agentId });
       const { data: agentResponse, error: agentError } = await supabase.functions.invoke(
         "call-agent",
         {
@@ -73,12 +86,24 @@ export function useChat(conversationId?: string) {
         }
       );
 
-      if (agentError) throw agentError;
-      if (agentResponse.error) throw new Error(agentResponse.error);
+      if (agentError) {
+        console.error('[useChat] Agent edge function error:', agentError);
+        throw agentError;
+      }
+      if (agentResponse.error) {
+        console.error('[useChat] Agent response error:', agentResponse.error);
+        throw new Error(agentResponse.error);
+      }
+      
+      console.log('[useChat] Agent response received:', { 
+        messageLength: agentResponse.message?.length,
+        hasMetadata: !!agentResponse.metadata 
+      });
 
       const latency = Date.now() - startTime;
 
       // Insert assistant message
+      console.log('[useChat] Inserting assistant message...');
       const { data: assistantMessage, error: assistantError } = await supabase
         .from("messages")
         .insert({
@@ -91,21 +116,29 @@ export function useChat(conversationId?: string) {
         .select()
         .single();
 
-      if (assistantError) throw assistantError;
+      if (assistantError) {
+        console.error('[useChat] Error inserting assistant message:', assistantError);
+        throw assistantError;
+      }
+      
+      console.log('[useChat] Assistant message inserted successfully:', assistantMessage);
 
       // Update conversation timestamp
+      console.log('[useChat] Updating conversation timestamp...');
       await supabase
         .from("conversations")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", conversationId);
 
       // Refresh messages
+      console.log('[useChat] Refreshing queries...');
       queryClient.invalidateQueries({ queryKey: ["messages", conversationId] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
+      console.log('[useChat] Message send complete!');
       return assistantMessage;
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("[useChat] Error sending message:", error);
       toast({
         title: "Erro ao enviar mensagem",
         description: error instanceof Error ? error.message : "Erro desconhecido",

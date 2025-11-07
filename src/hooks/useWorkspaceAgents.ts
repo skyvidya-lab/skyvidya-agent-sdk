@@ -48,10 +48,11 @@ export function useAllAvailableAgents(tenantId?: string) {
         .order("created_at", { ascending: false });
       
       if (tenantId) {
+        // Workspace específico: buscar globais + do tenant
         query = query.or(`is_global.eq.true,tenant_id.eq.${tenantId}`);
-      } else {
-        query = query.eq("is_global", true);
       }
+      // Se não há tenantId (Playground): buscar TODOS os agentes ativos
+      // (sem filtro adicional de is_global ou tenant_id)
       
       const { data, error } = await query;
       if (error) throw error;
@@ -64,7 +65,7 @@ export function useAllAvailableAgents(tenantId?: string) {
         agent: agent
       })) || [];
     },
-    enabled: tenantId !== undefined, // Allow fetching even without tenantId for playground
+    enabled: true, // Sempre habilita a query, mesmo sem tenantId (Playground)
   });
 }
 

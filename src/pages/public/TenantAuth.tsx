@@ -26,8 +26,8 @@ export function TenantAuth({ tenant }: TenantAuthProps) {
   const [showSignup, setShowSignup] = useState(false);
   const [showInterest, setShowInterest] = useState(false);
 
-  // Aplicar tema do tenant
-  useTenantTheme(tenant);
+  // Aplicar tema do tenant (somente em rotas públicas)
+  useTenantTheme(tenant, true);
 
   const [loginData, setLoginData] = useState({ email: '', password: '' });
 

@@ -10,9 +10,10 @@ interface Tenant {
   tenant_config?: TenantConfig;
 }
 
-export function useTenantTheme(tenant?: Tenant | null) {
+export function useTenantTheme(tenant?: Tenant | null, isPublicRoute: boolean = false) {
   useEffect(() => {
-    if (!tenant?.tenant_config) return;
+    // Só aplicar tema em rotas públicas do tenant para evitar vazamento
+    if (!tenant?.tenant_config || !isPublicRoute) return;
     
     const root = document.documentElement;
     const config = tenant.tenant_config;
@@ -36,5 +37,5 @@ export function useTenantTheme(tenant?: Tenant | null) {
       root.style.removeProperty('--tenant-secondary');
       root.style.removeProperty('--tenant-accent');
     };
-  }, [tenant]);
+  }, [tenant, isPublicRoute]);
 }
