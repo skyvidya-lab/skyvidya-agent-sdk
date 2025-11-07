@@ -50,7 +50,7 @@ export function useTenantRouter() {
       path === '/dashboard' ||
       path === '/tenants' ||
       path === '/agents' ||
-      path === '/chat' ||
+      path === '/playground' ||
       path === '/settings'
     ) {
       return null;

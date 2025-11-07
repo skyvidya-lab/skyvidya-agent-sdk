@@ -64,7 +64,7 @@ function AppContent() {
         }
       />
       <Route
-        path="/chat"
+        path="/playground"
         element={
           <ProtectedRoute>
             <Chat />

@@ -26,7 +26,7 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Workspaces", url: "/tenants", icon: Building2 },
   { title: "Agentes", url: "/agents", icon: Bot },
-  { title: "Playground", url: "/chat", icon: MessageSquare },
+  { title: "Playground", url: "/playground", icon: MessageSquare },
   { title: "Qualidade", url: "/quality", icon: FlaskConical },
   { title: "Benchmarks", url: "/benchmarks", icon: Target },
   { title: "Logs", url: "/logs", icon: Activity },
