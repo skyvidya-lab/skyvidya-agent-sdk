@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, X, Sparkles, Bot } from "lucide-react";
 import { ImageGeneratorDialog } from "./ImageGeneratorDialog";
 import type { ImageType } from "@/lib/imagePromptTemplates";
@@ -130,6 +130,38 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       enabled_agent_ids: currentWorkspaceAgents?.filter(wa => wa.agent?.id)?.map(wa => wa.agent.id) || [],
     },
   });
+
+  // Reset form quando tenant, open ou workspaceAgents mudarem
+  useEffect(() => {
+    if (open) {
+      const defaultValues: TenantFormValues = {
+        name: tenant?.name || "",
+        slug: tenant?.slug || "",
+        domain: tenant?.domain || "",
+        logo_url: tenant?.logo_url || "",
+        primary_color: tenant?.primary_color || "#000000",
+        secondary_color: tenant?.tenant_config?.secondary_color || "#666666",
+        accent_color: tenant?.tenant_config?.accent_color || "#0066CC",
+        font_family: tenant?.tenant_config?.font_family || "Inter",
+        background_image_url: tenant?.tenant_config?.background_image_url || "",
+        hero_title: tenant?.tenant_config?.hero_title || "Como posso ajudar você hoje?",
+        hero_subtitle: tenant?.tenant_config?.hero_subtitle || "Faça perguntas sobre nossos serviços",
+        chat_placeholder: tenant?.tenant_config?.chat_placeholder || "Digite sua mensagem...",
+        welcome_message: tenant?.tenant_config?.welcome_message || {
+          title: "Bem-vindo",
+          subtitle: "Estamos aqui para ajudar",
+        },
+        enable_google_auth: tenant?.tenant_config?.enable_google_auth ?? true,
+        enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
+        enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
+        enable_conversation_export: tenant?.tenant_config?.enable_conversation_export ?? true,
+        enabled_agent_ids: currentWorkspaceAgents?.filter(wa => wa.agent?.id)?.map(wa => wa.agent.id) || [],
+      };
+      
+      form.reset(defaultValues);
+      setLogoPreview(tenant?.logo_url || "");
+    }
+  }, [tenant, open, currentWorkspaceAgents, form]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -639,7 +671,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={createTenant.isPending || updateTenant.isPending || uploading}>
-                    {tenant ? "Atualizar" : "Criar"}
+                    {(createTenant.isPending || updateTenant.isPending) ? "Salvando..." : tenant ? "Atualizar" : "Criar"}
                   </Button>
                 </div>
               </form>
