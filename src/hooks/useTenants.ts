@@ -30,7 +30,7 @@ export function useCreateTenant() {
         default_theme, light_theme_colors, dark_theme_colors,
         font_family, background_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
-        default_entry_point,
+        default_entry_point, auth_form_position,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
         ...tenantData 
       } = tenant;
@@ -95,6 +95,7 @@ export function useCreateTenant() {
           chat_placeholder,
           welcome_message,
           default_entry_point,
+          auth_form_position,
           enable_google_auth,
           enable_guest_access,
           enable_file_upload,
@@ -143,7 +144,7 @@ export function useUpdateTenant() {
         default_theme, light_theme_colors, dark_theme_colors,
         font_family, background_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
-        default_entry_point,
+        default_entry_point, auth_form_position,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
         ...tenantData 
       } = tenant;
@@ -172,6 +173,7 @@ export function useUpdateTenant() {
           chat_placeholder,
           welcome_message,
           default_entry_point,
+          auth_form_position,
           enable_google_auth,
           enable_guest_access,
           enable_file_upload,

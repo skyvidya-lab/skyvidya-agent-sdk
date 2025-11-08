@@ -974,6 +974,7 @@ export type Database = {
       tenant_config: {
         Row: {
           accent_color: string | null
+          auth_form_position: string | null
           background_image_url: string | null
           chat_placeholder: string | null
           created_at: string | null
@@ -998,6 +999,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          auth_form_position?: string | null
           background_image_url?: string | null
           chat_placeholder?: string | null
           created_at?: string | null
@@ -1022,6 +1024,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          auth_form_position?: string | null
           background_image_url?: string | null
           chat_placeholder?: string | null
           created_at?: string | null

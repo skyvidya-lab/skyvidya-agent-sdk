@@ -56,11 +56,19 @@ export function TenantAuth({ tenant }: TenantAuthProps) {
 
   const primaryColor = config?.primary_color || '#000000';
   const secondaryColor = config?.secondary_color || '#F59E0B';
+  
+  // Classes de alinhamento baseadas na posição configurada
+  const formPosition = (config as any)?.auth_form_position || 'center';
+  const containerClasses: Record<string, string> = {
+    left: 'justify-start pl-8',
+    center: 'justify-center',
+    right: 'justify-end pr-8'
+  };
 
   return (
     <>
       <div 
-        className="tenant-page-container min-h-screen flex items-center justify-center p-4"
+        className={`tenant-page-container min-h-screen flex items-center p-4 ${containerClasses[formPosition]}`}
         style={{
           backgroundImage: config?.background_image_url 
             ? `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url(${config.background_image_url})`

@@ -196,6 +196,7 @@ const tenantSchema = z.object({
     subtitle: z.string().default("Estamos aqui para ajudar"),
   }),
   default_entry_point: z.enum(['landing', 'auth']).default('landing'),
+  auth_form_position: z.enum(['left', 'center', 'right']).default('center'),
   enable_google_auth: z.boolean().default(true),
   enable_guest_access: z.boolean().default(false),
   enable_file_upload: z.boolean().default(false),
@@ -266,6 +267,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
         subtitle: "Estamos aqui para ajudar",
       },
       default_entry_point: tenant?.tenant_config?.default_entry_point || 'landing',
+      auth_form_position: tenant?.tenant_config?.auth_form_position || 'center',
       enable_google_auth: tenant?.tenant_config?.enable_google_auth ?? true,
       enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
       enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
@@ -303,6 +305,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
           subtitle: "Estamos aqui para ajudar",
         },
         default_entry_point: tenant?.tenant_config?.default_entry_point || 'landing',
+        auth_form_position: tenant?.tenant_config?.auth_form_position || 'center',
         enable_google_auth: tenant?.tenant_config?.enable_google_auth ?? true,
         enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
         enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
@@ -622,6 +625,32 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                             Imagem de fundo para rotas públicas (máx: 10MB)
                           </FormDescription>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Posicionamento do Formulário de Auth */}
+                    <FormField
+                      control={form.control}
+                      name="auth_form_position"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Posição do Formulário de Login</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="left">⬅️ Esquerda (destaca direita do background)</SelectItem>
+                              <SelectItem value="center">⬆️ Centro (formulário centralizado)</SelectItem>
+                              <SelectItem value="right">➡️ Direita (destaca esquerda do background)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Ajuste a posição do formulário para dar mais destaque à imagem de fundo
+                          </FormDescription>
                         </FormItem>
                       )}
                     />
