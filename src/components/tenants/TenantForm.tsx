@@ -58,7 +58,7 @@ const GOOGLE_FONTS = [
   "Plus Jakarta Sans",
 ];
 
-// Paletas de cores predefinidas
+// Paletas de cores para modo claro
 const COLOR_PALETTES = [
   {
     name: "Azul Profissional",
@@ -110,14 +110,82 @@ const COLOR_PALETTES = [
   },
 ];
 
+// Paletas de cores para modo escuro
+const DARK_PALETTES = [
+  {
+    name: "Azul Noturno",
+    primary: "#60A5FA",
+    secondary: "#3B82F6",
+    accent: "#93C5FD",
+  },
+  {
+    name: "Verde Neon",
+    primary: "#34D399",
+    secondary: "#10B981",
+    accent: "#6EE7B7",
+  },
+  {
+    name: "Roxo Vibrante",
+    primary: "#A78BFA",
+    secondary: "#8B5CF6",
+    accent: "#C4B5FD",
+  },
+  {
+    name: "Laranja Quente",
+    primary: "#FB923C",
+    secondary: "#F97316",
+    accent: "#FDBA74",
+  },
+  {
+    name: "Rosa Elétrico",
+    primary: "#F472B6",
+    secondary: "#EC4899",
+    accent: "#F9A8D4",
+  },
+  {
+    name: "Ciano Brilhante",
+    primary: "#38BDF8",
+    secondary: "#0EA5E9",
+    accent: "#7DD3FC",
+  },
+  {
+    name: "Vermelho Intenso",
+    primary: "#F87171",
+    secondary: "#EF4444",
+    accent: "#FCA5A5",
+  },
+  {
+    name: "Cinza Escuro",
+    primary: "#9CA3AF",
+    secondary: "#6B7280",
+    accent: "#D1D5DB",
+  },
+];
+
 const tenantSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres").max(100),
   slug: z.string().min(3, "Slug deve ter no mínimo 3 caracteres").max(50).regex(/^[a-z0-9-]+$/, "Slug deve conter apenas letras minúsculas, números e hífens"),
   domain: z.string().url("Domínio inválido").optional().or(z.literal("")),
   logo_url: z.string().url("URL inválida").optional().or(z.literal("")),
-  primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida").default("#000000"),
-  secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida").default("#666666"),
-  accent_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida").default("#0066CC"),
+  default_theme: z.enum(['light', 'dark']).default('light'),
+  light_theme_colors: z.object({
+    primary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida"),
+    secondary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida"),
+    accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida"),
+  }).default({
+    primary: '#000000',
+    secondary: '#666666',
+    accent: '#0066CC',
+  }),
+  dark_theme_colors: z.object({
+    primary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida"),
+    secondary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida"),
+    accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor inválida"),
+  }).default({
+    primary: '#ffffff',
+    secondary: '#a0a0a0',
+    accent: '#3b82f6',
+  }),
   font_family: z.string().default("Inter"),
   background_image_url: z.string().url("URL inválida").optional().or(z.literal("")),
   hero_title: z.string().default("Como posso ajudar você hoje?"),
@@ -151,6 +219,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
   const [backgroundPreview, setBackgroundPreview] = useState(tenant?.tenant_config?.background_image_url || "");
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [currentImageType, setCurrentImageType] = useState<ImageType>('logo');
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -175,9 +244,17 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       slug: tenant?.slug || "",
       domain: tenant?.domain || "",
       logo_url: tenant?.logo_url || "",
-      primary_color: tenant?.primary_color || "#000000",
-      secondary_color: tenant?.tenant_config?.secondary_color || "#666666",
-      accent_color: tenant?.tenant_config?.accent_color || "#0066CC",
+      default_theme: tenant?.tenant_config?.default_theme || 'light',
+      light_theme_colors: tenant?.tenant_config?.light_theme_colors || {
+        primary: '#000000',
+        secondary: '#666666',
+        accent: '#0066CC',
+      },
+      dark_theme_colors: tenant?.tenant_config?.dark_theme_colors || {
+        primary: '#ffffff',
+        secondary: '#a0a0a0',
+        accent: '#3b82f6',
+      },
       font_family: tenant?.tenant_config?.font_family || "Inter",
       background_image_url: tenant?.tenant_config?.background_image_url || "",
       hero_title: tenant?.tenant_config?.hero_title || "Como posso ajudar você hoje?",
@@ -203,9 +280,17 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
         slug: tenant?.slug || "",
         domain: tenant?.domain || "",
         logo_url: tenant?.logo_url || "",
-        primary_color: tenant?.primary_color || "#000000",
-        secondary_color: tenant?.tenant_config?.secondary_color || "#666666",
-        accent_color: tenant?.tenant_config?.accent_color || "#0066CC",
+        default_theme: tenant?.tenant_config?.default_theme || 'light',
+        light_theme_colors: tenant?.tenant_config?.light_theme_colors || {
+          primary: '#000000',
+          secondary: '#666666',
+          accent: '#0066CC',
+        },
+        dark_theme_colors: tenant?.tenant_config?.dark_theme_colors || {
+          primary: '#ffffff',
+          secondary: '#a0a0a0',
+          accent: '#3b82f6',
+        },
         font_family: tenant?.tenant_config?.font_family || "Inter",
         background_image_url: tenant?.tenant_config?.background_image_url || "",
         hero_title: tenant?.tenant_config?.hero_title || "Como posso ajudar você hoje?",
@@ -225,6 +310,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       form.reset(defaultValues);
       setLogoPreview(tenant?.logo_url || "");
       setBackgroundPreview(tenant?.tenant_config?.background_image_url || "");
+      setPreviewTheme(tenant?.tenant_config?.default_theme || 'light');
     }
   }, [tenant, open, currentWorkspaceAgents, form]);
 
@@ -325,10 +411,16 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
     }
   };
 
-  const applyColorPalette = (palette: typeof COLOR_PALETTES[0]) => {
-    form.setValue("primary_color", palette.primary);
-    form.setValue("secondary_color", palette.secondary);
-    form.setValue("accent_color", palette.accent);
+  const applyColorPalette = (palette: typeof COLOR_PALETTES[0] | typeof DARK_PALETTES[0]) => {
+    if (previewTheme === 'light') {
+      form.setValue("light_theme_colors.primary", palette.primary);
+      form.setValue("light_theme_colors.secondary", palette.secondary);
+      form.setValue("light_theme_colors.accent", palette.accent);
+    } else {
+      form.setValue("dark_theme_colors.primary", palette.primary);
+      form.setValue("dark_theme_colors.secondary", palette.secondary);
+      form.setValue("dark_theme_colors.accent", palette.accent);
+    }
     toast.success(`Paleta "${palette.name}" aplicada!`);
   };
 
@@ -531,14 +623,51 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                       )}
                     />
                     
-                    {/* Paletas de Cores Predefinidas */}
-                    <div className="space-y-3 pt-2">
+                    {/* Seletor de Tema Padrão */}
+                    <FormField
+                      control={form.control}
+                      name="default_theme"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tema Padrão</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="light">🌞 Claro</SelectItem>
+                              <SelectItem value="dark">🌙 Escuro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Tema padrão exibido aos usuários
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Preview do Tema em Tempo Real */}
+                    <div className="space-y-3">
+                      <FormLabel>Editar Cores do Tema</FormLabel>
+                      <Tabs value={previewTheme} onValueChange={(v) => setPreviewTheme(v as 'light' | 'dark')}>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="light">🌞 Modo Claro</TabsTrigger>
+                          <TabsTrigger value="dark">🌙 Modo Escuro</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
+
+                    {/* Paletas Predefinidas para o tema selecionado */}
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Palette className="h-4 w-4 text-muted-foreground" />
-                        <FormLabel className="text-sm">Paletas Predefinidas</FormLabel>
+                        <FormLabel className="text-sm">Paletas {previewTheme === 'light' ? 'Claras' : 'Escuras'}</FormLabel>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        {COLOR_PALETTES.map((palette) => (
+                        {(previewTheme === 'light' ? COLOR_PALETTES : DARK_PALETTES).map((palette) => (
                           <Button
                             key={palette.name}
                             type="button"
@@ -566,58 +695,110 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                         ))}
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <FormField
-                        control={form.control}
-                        name="primary_color"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Cor Primária</FormLabel>
-                            <FormControl>
-                              <div className="flex gap-2">
-                                <Input type="color" {...field} className="w-16 h-10 p-1" />
-                                <Input {...field} placeholder="#000000" />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="secondary_color"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Secundária</FormLabel>
-                            <FormControl>
-                              <div className="flex gap-2">
-                                <Input type="color" {...field} className="w-16 h-10 p-1" />
-                                <Input {...field} placeholder="#666666" />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="accent_color"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Destaque</FormLabel>
-                            <FormControl>
-                              <div className="flex gap-2">
-                                <Input type="color" {...field} className="w-16 h-10 p-1" />
-                                <Input {...field} placeholder="#0066CC" />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+
+                    {/* Cores do Modo Claro */}
+                    {previewTheme === 'light' && (
+                      <div className="space-y-3 p-4 border rounded-lg bg-white">
+                        <FormLabel className="text-sm font-medium">Cores do Modo Claro</FormLabel>
+                        <div className="grid grid-cols-3 gap-2">
+                          <FormField
+                            control={form.control}
+                            name="light_theme_colors.primary"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Primária</FormLabel>
+                                <div className="flex flex-col gap-1">
+                                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                                  <Input {...field} placeholder="#000000" className="text-xs" />
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="light_theme_colors.secondary"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Secundária</FormLabel>
+                                <div className="flex flex-col gap-1">
+                                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                                  <Input {...field} placeholder="#666666" className="text-xs" />
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="light_theme_colors.accent"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Destaque</FormLabel>
+                                <div className="flex flex-col gap-1">
+                                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                                  <Input {...field} placeholder="#0066CC" className="text-xs" />
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cores do Modo Escuro */}
+                    {previewTheme === 'dark' && (
+                      <div className="space-y-3 p-4 border rounded-lg bg-gray-900 text-white">
+                        <FormLabel className="text-sm font-medium text-white">Cores do Modo Escuro</FormLabel>
+                        <div className="grid grid-cols-3 gap-2">
+                          <FormField
+                            control={form.control}
+                            name="dark_theme_colors.primary"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs text-white">Primária</FormLabel>
+                                <div className="flex flex-col gap-1">
+                                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                                  <Input {...field} placeholder="#ffffff" className="text-xs" />
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="dark_theme_colors.secondary"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs text-white">Secundária</FormLabel>
+                                <div className="flex flex-col gap-1">
+                                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                                  <Input {...field} placeholder="#a0a0a0" className="text-xs" />
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="dark_theme_colors.accent"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs text-white">Destaque</FormLabel>
+                                <div className="flex flex-col gap-1">
+                                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                                  <Input {...field} placeholder="#3b82f6" className="text-xs" />
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
                     <FormField
-                      control={form.control}
                       name="hero_title"
                       render={({ field }) => (
                         <FormItem>
@@ -845,13 +1026,18 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
 
           {/* Preview Panel */}
           <div className="hidden lg:block">
-            <div className="sticky top-4">
-              <h3 className="text-sm font-medium mb-3">Preview em Tempo Real</h3>
+            <div className="sticky top-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium mb-3">Preview em Tempo Real</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Visualizando tema: {previewTheme === 'light' ? '🌞 Claro' : '🌙 Escuro'}
+                </p>
+              </div>
               <div 
-                className="rounded-lg border overflow-hidden relative"
+                className="rounded-lg border overflow-hidden relative transition-colors"
                 style={{
-                  backgroundColor: watchedValues.primary_color + "10",
-                  borderColor: watchedValues.primary_color + "40",
+                  backgroundColor: previewTheme === 'dark' ? '#1a1a1a' : '#ffffff',
+                  borderColor: previewTheme === 'dark' ? '#374151' : '#e5e7eb',
                   backgroundImage: watchedValues.background_image_url ? `url(${watchedValues.background_image_url})` : undefined,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
@@ -860,8 +1046,12 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                  <div 
                   className="p-6 space-y-4 relative z-10" 
                   style={{ 
-                    color: watchedValues.primary_color,
-                    backgroundColor: watchedValues.background_image_url ? "rgba(255, 255, 255, 0.9)" : undefined,
+                    color: previewTheme === 'dark' 
+                      ? watchedValues.dark_theme_colors?.primary || '#ffffff'
+                      : watchedValues.light_theme_colors?.primary || '#000000',
+                    backgroundColor: watchedValues.background_image_url 
+                      ? previewTheme === 'dark' ? "rgba(0, 0, 0, 0.85)" : "rgba(255, 255, 255, 0.9)"
+                      : undefined,
                     fontFamily: watchedValues.font_family ? `"${watchedValues.font_family}", sans-serif` : undefined,
                   }}
                 >
@@ -872,26 +1062,51 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                   <p className="text-sm opacity-80">{watchedValues.hero_subtitle || "Faça perguntas sobre nossos serviços"}</p>
                   <div className="flex gap-2 flex-wrap">
                     <div 
-                      className="px-3 py-1.5 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: watchedValues.primary_color, color: "white" }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                      style={{ 
+                        backgroundColor: previewTheme === 'dark'
+                          ? watchedValues.dark_theme_colors?.primary || '#ffffff'
+                          : watchedValues.light_theme_colors?.primary || '#000000'
+                      }}
                     >
                       Primária
                     </div>
                     <div 
-                      className="px-3 py-1.5 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: watchedValues.secondary_color, color: "white" }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                      style={{ 
+                        backgroundColor: previewTheme === 'dark'
+                          ? watchedValues.dark_theme_colors?.secondary || '#a0a0a0'
+                          : watchedValues.light_theme_colors?.secondary || '#666666'
+                      }}
                     >
                       Secundária
                     </div>
                     <div 
-                      className="px-3 py-1.5 rounded-full text-xs font-medium"
-                      style={{ backgroundColor: watchedValues.accent_color, color: "white" }}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium text-white"
+                      style={{ 
+                        backgroundColor: previewTheme === 'dark'
+                          ? watchedValues.dark_theme_colors?.accent || '#3b82f6'
+                          : watchedValues.light_theme_colors?.accent || '#0066CC'
+                      }}
                     >
                       Destaque
                     </div>
                   </div>
-                  <div className="bg-background rounded-lg p-3 border">
-                    <p className="text-xs text-muted-foreground">{watchedValues.chat_placeholder || "Digite sua mensagem..."}</p>
+                  <div 
+                    className="rounded-lg p-3 border transition-colors"
+                    style={{
+                      backgroundColor: previewTheme === 'dark' ? '#374151' : '#f9fafb',
+                      borderColor: previewTheme === 'dark' ? '#4b5563' : '#e5e7eb',
+                    }}
+                  >
+                    <p 
+                      className="text-xs"
+                      style={{ 
+                        color: previewTheme === 'dark' ? '#9ca3af' : '#6b7280' 
+                      }}
+                    >
+                      {watchedValues.chat_placeholder || "Digite sua mensagem..."}
+                    </p>
                   </div>
                 </div>
               </div>

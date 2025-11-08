@@ -4,6 +4,17 @@ interface TenantConfig {
   primary_color?: string;
   secondary_color?: string;
   accent_color?: string;
+  default_theme?: 'light' | 'dark';
+  light_theme_colors?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+  };
+  dark_theme_colors?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+  };
 }
 
 interface Tenant {
@@ -20,18 +31,32 @@ export function useTenantTheme(tenant?: Tenant | null, scopeSelector: string = '
     
     const config = tenant.tenant_config;
     
+    // Detectar preferência do sistema
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Usar tema configurado ou preferência do sistema
+    const theme = config.default_theme || (prefersDark ? 'dark' : 'light');
+    
+    // Selecionar cores baseado no tema
+    const colors = theme === 'dark' 
+      ? config.dark_theme_colors 
+      : config.light_theme_colors;
+    
     // Aplicar cores customizadas como CSS variables no elemento específico
-    if (config.primary_color) {
-      element.style.setProperty('--tenant-primary', config.primary_color);
+    if (colors?.primary) {
+      element.style.setProperty('--tenant-primary', colors.primary);
     }
     
-    if (config.secondary_color) {
-      element.style.setProperty('--tenant-secondary', config.secondary_color);
+    if (colors?.secondary) {
+      element.style.setProperty('--tenant-secondary', colors.secondary);
     }
     
-    if (config.accent_color) {
-      element.style.setProperty('--tenant-accent', config.accent_color);
+    if (colors?.accent) {
+      element.style.setProperty('--tenant-accent', colors.accent);
     }
+    
+    // Adicionar classe de tema para permitir estilos condicionais
+    element.classList.toggle('dark-theme', theme === 'dark');
+    element.classList.toggle('light-theme', theme === 'light');
     
     return () => {
       // Cleanup ao desmontar
@@ -39,6 +64,7 @@ export function useTenantTheme(tenant?: Tenant | null, scopeSelector: string = '
         element.style.removeProperty('--tenant-primary');
         element.style.removeProperty('--tenant-secondary');
         element.style.removeProperty('--tenant-accent');
+        element.classList.remove('dark-theme', 'light-theme');
       }
     };
   }, [tenant, scopeSelector]);

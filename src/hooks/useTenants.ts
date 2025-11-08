@@ -27,7 +27,8 @@ export function useCreateTenant() {
     mutationFn: async (tenant: any) => {
       const { 
         enabled_agent_ids,
-        secondary_color, accent_color, font_family, background_image_url,
+        default_theme, light_theme_colors, dark_theme_colors,
+        font_family, background_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
         ...tenantData 
@@ -58,8 +59,9 @@ export function useCreateTenant() {
         .from("tenant_config")
         .insert({
           tenant_id: tenantResult.id,
-          secondary_color,
-          accent_color,
+          default_theme,
+          light_theme_colors,
+          dark_theme_colors,
           font_family,
           background_image_url,
           hero_title,
@@ -111,7 +113,8 @@ export function useUpdateTenant() {
     mutationFn: async ({ id, ...tenant }: any) => {
       const { 
         enabled_agent_ids,
-        secondary_color, accent_color, font_family, background_image_url,
+        default_theme, light_theme_colors, dark_theme_colors,
+        font_family, background_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
         ...tenantData 
@@ -131,8 +134,9 @@ export function useUpdateTenant() {
         .from("tenant_config")
         .upsert({
           tenant_id: id,
-          secondary_color,
-          accent_color,
+          default_theme,
+          light_theme_colors,
+          dark_theme_colors,
           font_family,
           background_image_url,
           hero_title,
