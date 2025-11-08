@@ -52,8 +52,8 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
 
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
-      <SidebarHeader className={isCollapsed ? "border-b" : "border-b p-4"}>
-        {!isCollapsed && (
+      {!isCollapsed && (
+        <SidebarHeader className="border-b p-4">
           <div className="space-y-3">
             {currentTenant?.logo_url && (
               <div className="flex justify-center pb-2">
@@ -66,12 +66,12 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
             )}
             <TenantSwitcher />
           </div>
-        )}
-      </SidebarHeader>
+        </SidebarHeader>
+      )}
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          {!isCollapsed && <SidebarGroupLabel>Menu</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -94,23 +94,25 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className={isCollapsed ? "border-t p-2" : "border-t p-4"}>
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${isCollapsed ? "justify-center" : ""}`}>
           <Avatar className="h-8 w-8">
             <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
           {!isCollapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.email}</p>
-            </div>
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.email}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={signOut}
+                title="Sair"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            title="Sair"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
