@@ -41,7 +41,12 @@ export function TenantList() {
         {tenants?.map((tenant) => (
           <Card key={tenant.id}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-lg font-medium">{tenant.name}</CardTitle>
+              <div className="flex items-center gap-3 flex-1">
+                {tenant.logo_url && (
+                  <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-8 object-contain" />
+                )}
+                <CardTitle className="text-lg font-medium">{tenant.name}</CardTitle>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => handleEdit(tenant)}>
                 <Pencil className="h-4 w-4" />
               </Button>

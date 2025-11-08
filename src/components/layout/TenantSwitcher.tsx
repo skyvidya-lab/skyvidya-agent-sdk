@@ -39,7 +39,7 @@ export function TenantSwitcher() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_roles")
-        .select("tenant_id, tenants(id, name)")
+        .select("tenant_id, tenants(id, name, logo_url)")
         .eq("user_id", user?.id);
       
       if (error) throw error;
@@ -105,13 +105,20 @@ export function TenantSwitcher() {
     );
   }
 
+  const currentTenant = tenants?.find((t: any) => t.id === profile?.current_tenant_id);
+
   return (
     <Select
       value={profile?.current_tenant_id || ""}
       onValueChange={(value) => switchTenant.mutate(value)}
     >
       <SelectTrigger className="w-full relative z-50">
-        <SelectValue placeholder="Selecione um workspace" />
+        <div className="flex items-center gap-2">
+          {currentTenant?.logo_url && (
+            <img src={currentTenant.logo_url} alt="" className="h-4 w-4 object-contain" />
+          )}
+          <SelectValue placeholder="Selecione um workspace" />
+        </div>
       </SelectTrigger>
       <SelectContent 
         className="z-[100] bg-popover"
@@ -119,7 +126,12 @@ export function TenantSwitcher() {
       >
         {tenants?.map((tenant: any) => (
           <SelectItem key={tenant.id} value={tenant.id}>
-            {tenant.name}
+            <div className="flex items-center gap-2">
+              {tenant.logo_url && (
+                <img src={tenant.logo_url} alt="" className="h-4 w-4 object-contain" />
+              )}
+              <span>{tenant.name}</span>
+            </div>
           </SelectItem>
         ))}
       </SelectContent>

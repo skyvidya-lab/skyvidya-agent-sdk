@@ -322,9 +322,10 @@ export function ChatInterface({
               {/* Heading Principal */}
               <div className="space-y-4 mt-12 animate-fade-in">
                 <h2 className="text-4xl md:text-5xl font-bold">
-                  Como posso ajudar você hoje?
+                  {config?.hero_title || "Como posso ajudar você hoje?"}
                 </h2>
-                <p className="text-lg text-muted-foreground">Faça perguntas sobre nossos serviços{config?.hero_subtitle || "o sistema"}
+                <p className="text-lg text-muted-foreground">
+                  {config?.hero_subtitle || "Faça perguntas sobre nossos serviços"}
                 </p>
               </div>
               
