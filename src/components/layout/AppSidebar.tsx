@@ -52,7 +52,7 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
 
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
-      <SidebarHeader className="border-b p-4">
+      <SidebarHeader className={isCollapsed ? "border-b" : "border-b p-4"}>
         {!isCollapsed && (
           <div className="space-y-3">
             {currentTenant?.logo_url && (
@@ -93,7 +93,7 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4">
+      <SidebarFooter className={isCollapsed ? "border-t p-2" : "border-t p-4"}>
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
