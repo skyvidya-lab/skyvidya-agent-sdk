@@ -69,8 +69,8 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
         </SidebarHeader>
       )}
 
-      <SidebarContent>
-        <SidebarGroup>
+      <SidebarContent className="overflow-y-auto overflow-x-hidden">
+        <SidebarGroup className={isCollapsed ? "p-0" : ""}>
           {!isCollapsed && <SidebarGroupLabel>Menu</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
