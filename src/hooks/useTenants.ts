@@ -35,9 +35,15 @@ export function useCreateTenant() {
         ...tenantData 
       } = tenant;
 
+      // Converter strings vazias em null para evitar violação de constraint de unicidade
+      const cleanedTenantData = {
+        ...tenantData,
+        domain: tenantData.domain?.trim() || null,
+      };
+
       const { data: tenantResult, error: tenantError } = await supabase
         .from("tenants")
-        .insert(tenantData)
+        .insert(cleanedTenantData)
         .select()
         .single();
       
@@ -149,9 +155,15 @@ export function useUpdateTenant() {
         ...tenantData 
       } = tenant;
 
+      // Converter strings vazias em null para evitar violação de constraint de unicidade
+      const cleanedTenantData = {
+        ...tenantData,
+        domain: tenantData.domain?.trim() || null,
+      };
+
       const { data: tenantResult, error: tenantError } = await supabase
         .from("tenants")
-        .update(tenantData)
+        .update(cleanedTenantData)
         .eq("id", id)
         .select()
         .maybeSingle();
