@@ -60,8 +60,7 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="h-full overflow-y-auto">
-        <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
             Dashboard Executivo
@@ -340,7 +339,6 @@ export default function Dashboard() {
               )}
             </GlassCardContent>
           </GlassCard>
-        </div>
         </div>
       </div>
     </AppLayout>

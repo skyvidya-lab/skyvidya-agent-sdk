@@ -40,7 +40,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <MobileHeader currentTenant={currentTenant} />
       <div className="min-h-screen flex w-full pt-0 md:pt-14">
         <AppSidebar currentTenant={currentTenant} />
-        <main className="flex-1 h-screen md:h-[calc(100vh-3.5rem)] pt-14 md:pt-0">
+        <main className="flex-1 overflow-y-auto h-screen md:h-[calc(100vh-3.5rem)] pt-14 md:pt-0">
           {children}
         </main>
       </div>

@@ -69,10 +69,10 @@ export function AppSidebar({ currentTenant }: AppSidebarProps) {
         </SidebarHeader>
       )}
 
-      <SidebarContent className="overflow-y-auto overflow-x-hidden">
-        <SidebarGroup className={isCollapsed ? "p-0" : ""}>
-          {!isCollapsed && <SidebarGroupLabel>Menu</SidebarGroupLabel>}
+      <SidebarContent>
+        <SidebarGroup className={isCollapsed ? "px-1 py-0" : "p-2"}>
           <SidebarGroupContent>
+            {!isCollapsed && <SidebarGroupLabel className="mb-2">Menu</SidebarGroupLabel>}
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
