@@ -87,6 +87,9 @@ export function useCreateTenant() {
         console.log("Role verificada com sucesso:", verifyRole);
       }
 
+      // Determinar cores baseadas no tema padrão
+      const activeColors = default_theme === 'dark' ? dark_theme_colors : light_theme_colors;
+
       await supabase
         .from("tenant_config")
         .insert({
@@ -94,6 +97,11 @@ export function useCreateTenant() {
           default_theme,
           light_theme_colors,
           dark_theme_colors,
+          // Campos diretos para compatibilidade com páginas públicas
+          primary_color: activeColors?.primary,
+          secondary_color: activeColors?.secondary,
+          accent_color: activeColors?.accent,
+          logo_url: tenantData.logo_url,
           font_family,
           background_image_url,
           hero_title,
@@ -171,6 +179,9 @@ export function useUpdateTenant() {
       if (tenantError) throw tenantError;
       if (!tenantResult) throw new Error("Workspace não encontrado ou sem permissão");
 
+      // Determinar cores baseadas no tema padrão
+      const activeColors = default_theme === 'dark' ? dark_theme_colors : light_theme_colors;
+
       await supabase
         .from("tenant_config")
         .upsert({
@@ -178,6 +189,11 @@ export function useUpdateTenant() {
           default_theme,
           light_theme_colors,
           dark_theme_colors,
+          // Campos diretos para compatibilidade com páginas públicas
+          primary_color: activeColors?.primary,
+          secondary_color: activeColors?.secondary,
+          accent_color: activeColors?.accent,
+          logo_url: tenantData.logo_url,
           font_family,
           background_image_url,
           hero_title,
