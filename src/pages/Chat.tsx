@@ -1,30 +1,23 @@
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ChatInterface } from "@/components/chat/ChatInterface";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { WorkspaceSelector } from "@/components/workspace/WorkspaceSelector";
 import { useLocation } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 
 const Chat = () => {
-  const { user } = useAuth();
   const location = useLocation();
   const isPlayground = location.pathname === '/playground';
+  
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(
+    () => localStorage.getItem('admin-selected-workspace')
+  );
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("current_tenant_id")
-        .eq("id", user?.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+  useEffect(() => {
+    if (selectedWorkspaceId) {
+      localStorage.setItem('admin-selected-workspace', selectedWorkspaceId);
+    }
+  }, [selectedWorkspaceId]);
 
   return (
     <AppLayout>
@@ -32,28 +25,39 @@ const Chat = () => {
         <div className="h-full max-h-full">
           <ChatInterface isPlayground={true} />
         </div>
-      ) : isLoading ? (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Carregando workspace...</p>
-          </div>
-        </div>
-      ) : profile?.current_tenant_id ? (
-        <div className="h-full max-h-full">
-          <ChatInterface tenantId={profile.current_tenant_id} />
-        </div>
       ) : (
-        <div className="flex items-center justify-center h-full p-6">
-          <div className="text-center space-y-4 animate-fade-in">
-            <div className="rounded-full bg-primary/10 p-6 inline-block mb-4">
-              <MessageSquare className="h-12 w-12 text-primary" />
+        <div className="h-full flex flex-col">
+          <div className="border-b p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold">Chat com Agentes</h1>
+                <p className="text-sm text-muted-foreground">Converse com os agentes do workspace</p>
+              </div>
+              <WorkspaceSelector 
+                value={selectedWorkspaceId} 
+                onChange={setSelectedWorkspaceId}
+                placeholder="Selecione um workspace"
+              />
             </div>
-            <h3 className="text-xl font-semibold">Nenhum Workspace Selecionado</h3>
-            <p className="text-muted-foreground max-w-md">
-              Selecione um workspace no menu lateral para usar o chat
-            </p>
           </div>
+
+          {selectedWorkspaceId ? (
+            <div className="flex-1 overflow-hidden">
+              <ChatInterface tenantId={selectedWorkspaceId} />
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-6">
+              <div className="text-center space-y-4 animate-fade-in">
+                <div className="rounded-full bg-primary/10 p-6 inline-block mb-4">
+                  <MessageSquare className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Selecione um Workspace</h3>
+                <p className="text-muted-foreground max-w-md">
+                  Escolha um workspace acima para começar a conversar com os agentes
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </AppLayout>
