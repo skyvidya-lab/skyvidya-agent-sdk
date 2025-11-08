@@ -188,6 +188,7 @@ const tenantSchema = z.object({
   }),
   font_family: z.string().default("Inter"),
   background_image_url: z.string().url("URL inválida").optional().or(z.literal("")),
+  hero_image_url: z.string().url("URL inválida").optional().or(z.literal("")),
   hero_title: z.string().default("Como posso ajudar você hoje?"),
   hero_subtitle: z.string().default("Faça perguntas sobre nossos serviços"),
   chat_placeholder: z.string().default("Digite sua mensagem..."),
@@ -217,8 +218,10 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
   const updateTenant = useUpdateTenant();
   const [uploading, setUploading] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const [logoPreview, setLogoPreview] = useState(tenant?.logo_url || "");
   const [backgroundPreview, setBackgroundPreview] = useState(tenant?.tenant_config?.background_image_url || "");
+  const [heroPreview, setHeroPreview] = useState(tenant?.tenant_config?.hero_image_url || "");
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [currentImageType, setCurrentImageType] = useState<ImageType>('logo');
   const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
@@ -257,9 +260,10 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
         secondary: '#a0a0a0',
         accent: '#3b82f6',
       },
-      font_family: tenant?.tenant_config?.font_family || "Inter",
-      background_image_url: tenant?.tenant_config?.background_image_url || "",
-      hero_title: tenant?.tenant_config?.hero_title || "Como posso ajudar você hoje?",
+        font_family: tenant?.tenant_config?.font_family || "Inter",
+        background_image_url: tenant?.tenant_config?.background_image_url || "",
+        hero_image_url: tenant?.tenant_config?.hero_image_url || "",
+        hero_title: tenant?.tenant_config?.hero_title || "Como posso ajudar você hoje?",
       hero_subtitle: tenant?.tenant_config?.hero_subtitle || "Faça perguntas sobre nossos serviços",
       chat_placeholder: tenant?.tenant_config?.chat_placeholder || "Digite sua mensagem...",
       welcome_message: tenant?.tenant_config?.welcome_message || {
@@ -297,6 +301,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
         },
         font_family: tenant?.tenant_config?.font_family || "Inter",
         background_image_url: tenant?.tenant_config?.background_image_url || "",
+        hero_image_url: tenant?.tenant_config?.hero_image_url || "",
         hero_title: tenant?.tenant_config?.hero_title || "Como posso ajudar você hoje?",
         hero_subtitle: tenant?.tenant_config?.hero_subtitle || "Faça perguntas sobre nossos serviços",
         chat_placeholder: tenant?.tenant_config?.chat_placeholder || "Digite sua mensagem...",
@@ -316,6 +321,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       form.reset(defaultValues);
       setLogoPreview(tenant?.logo_url || "");
       setBackgroundPreview(tenant?.tenant_config?.background_image_url || "");
+      setHeroPreview(tenant?.tenant_config?.hero_image_url || "");
       setPreviewTheme(tenant?.tenant_config?.default_theme || 'light');
     }
   }, [tenant, open, currentWorkspaceAgents, form]);
@@ -414,7 +420,51 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
     } else if (currentImageType === 'background') {
       form.setValue("background_image_url", url);
       setBackgroundPreview(url);
+    } else if (currentImageType === 'hero') {
+      form.setValue("hero_image_url", url);
+      setHeroPreview(url);
     }
+  };
+
+  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10485760) { // 10MB
+      toast.error("Arquivo muito grande. Máximo: 10MB");
+      return;
+    }
+
+    setUploadingHero(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("tenant-logos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("tenant-logos")
+        .getPublicUrl(filePath);
+
+      form.setValue("hero_image_url", data.publicUrl);
+      setHeroPreview(data.publicUrl);
+      toast.success("Imagem hero enviada com sucesso!");
+    } catch (error) {
+      console.error("Error uploading hero image:", error);
+      toast.error("Erro ao enviar imagem hero");
+    } finally {
+      setUploadingHero(false);
+    }
+  };
+
+  const removeHero = () => {
+    form.setValue("hero_image_url", "");
+    setHeroPreview("");
   };
 
   const applyColorPalette = (palette: typeof COLOR_PALETTES[0] | typeof DARK_PALETTES[0]) => {
@@ -623,6 +673,65 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                           </FormControl>
                           <FormDescription>
                             Imagem de fundo para rotas públicas (máx: 10MB)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="hero_image_url"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Imagem Hero do Chat</FormLabel>
+                          <FormControl>
+                            <div className="space-y-2">
+                              {heroPreview && (
+                                <div className="relative w-full h-32 border rounded-lg overflow-hidden">
+                                  <img src={heroPreview} alt="Hero preview" className="w-full h-full object-contain bg-muted" />
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6"
+                                    onClick={removeHero}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                              <div className="grid grid-cols-2 gap-2">
+                                <label className="flex items-center justify-center h-20 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleHeroUpload}
+                                    className="hidden"
+                                    disabled={uploadingHero}
+                                  />
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Upload className="h-5 w-5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">Upload</span>
+                                  </div>
+                                </label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => handleOpenAiDialog('hero')}
+                                  className="h-20"
+                                >
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Sparkles className="h-5 w-5 text-primary" />
+                                    <span className="text-xs">Gerar com IA</span>
+                                  </div>
+                                </Button>
+                              </div>
+                              <Input {...field} placeholder="Ou cole uma URL: https://exemplo.com/hero.jpg" />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Ilustração principal para a página de chat (opcional, usa logo como fallback)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

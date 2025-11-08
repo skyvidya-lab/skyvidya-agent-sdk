@@ -1,4 +1,4 @@
-export type ImageType = 'logo' | 'background' | 'favicon';
+export type ImageType = 'logo' | 'background' | 'favicon' | 'hero';
 
 export interface PromptTemplate {
   id: string;
@@ -85,12 +85,47 @@ export const backgroundTemplates: PromptTemplate[] = [
   },
 ];
 
+export const heroTemplates: PromptTemplate[] = [
+  {
+    id: 'chat-assistant',
+    label: 'Assistente de Chat',
+    prompt: 'Create a friendly AI assistant illustration showing a robot or digital character with a welcoming pose, modern 3D style, soft gradients of blue and purple. Professional but approachable. Square format, centered composition.',
+    imageType: 'hero',
+  },
+  {
+    id: 'customer-service',
+    label: 'Atendimento',
+    prompt: 'Create an illustration of a customer service scene with digital elements, showing communication and support. Modern flat design style with blue and teal colors. Friendly and professional. Square format.',
+    imageType: 'hero',
+  },
+  {
+    id: 'abstract-tech',
+    label: 'Tech Abstrato',
+    prompt: 'Create an abstract technological illustration with flowing data streams, geometric shapes, and glowing elements. Modern, sophisticated design with blue and purple gradients. Square format, centered.',
+    imageType: 'hero',
+  },
+  {
+    id: 'innovation',
+    label: 'Inovação',
+    prompt: 'Create an innovation-themed illustration showing lightbulbs, creative elements, and futuristic technology. Bright, inspiring colors with blue and yellow. Modern illustration style. Square format.',
+    imageType: 'hero',
+  },
+  {
+    id: 'digital-workspace',
+    label: 'Workspace Digital',
+    prompt: 'Create a modern digital workspace illustration with floating screens, collaboration elements, and productivity symbols. Clean, professional design with blue and white colors. Square format, centered.',
+    imageType: 'hero',
+  },
+];
+
 export const getTemplatesByType = (type: ImageType): PromptTemplate[] => {
   switch (type) {
     case 'logo':
       return logoTemplates;
     case 'background':
       return backgroundTemplates;
+    case 'hero':
+      return heroTemplates;
     default:
       return [];
   }

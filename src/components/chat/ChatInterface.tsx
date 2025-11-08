@@ -308,16 +308,23 @@ export function ChatInterface({
             </div>
           </> : <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-background to-muted/20">
             <div className="text-center space-y-8 max-w-3xl p-8">
-              {/* Logo Grande */}
-              {config?.logo_url && <img src={config.logo_url} alt="Logo" className="h-24 mx-auto mb-6 object-contain animate-fade-in" />}
+              {/* Hero Image ou Logo (sem redundância de nome) */}
+              {((config as any)?.hero_image_url || config?.logo_url) && (
+                <img 
+                  src={(config as any).hero_image_url || config.logo_url} 
+                  alt={(config as any).hero_image_url ? "Hero Illustration" : "Logo"} 
+                  className="h-40 w-auto mx-auto object-contain animate-fade-in" 
+                />
+              )}
               
-              {/* Título e Subtítulo */}
-              <div className="space-y-3 animate-fade-in">
-                <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                  {effectiveTenant?.name}
-                </h1>
-                
-              </div>
+              {/* Mostrar nome do tenant APENAS se não houver imagem */}
+              {!(config as any)?.hero_image_url && !config?.logo_url && (
+                <div className="space-y-2 animate-fade-in">
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                    {effectiveTenant?.name}
+                  </h1>
+                </div>
+              )}
               
               {/* Heading Principal */}
               <div className="space-y-4 mt-12 animate-fade-in">

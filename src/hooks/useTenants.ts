@@ -28,7 +28,7 @@ export function useCreateTenant() {
       const { 
         enabled_agent_ids,
         default_theme, light_theme_colors, dark_theme_colors,
-        font_family, background_image_url,
+        font_family, background_image_url, hero_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
         default_entry_point, auth_form_position,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
@@ -104,6 +104,7 @@ export function useCreateTenant() {
           logo_url: tenantData.logo_url,
           font_family,
           background_image_url,
+          hero_image_url,
           hero_title,
           hero_subtitle,
           chat_placeholder,
@@ -156,7 +157,7 @@ export function useUpdateTenant() {
       const { 
         enabled_agent_ids,
         default_theme, light_theme_colors, dark_theme_colors,
-        font_family, background_image_url,
+        font_family, background_image_url, hero_image_url,
         hero_title, hero_subtitle, chat_placeholder, welcome_message,
         default_entry_point, auth_form_position,
         enable_google_auth, enable_guest_access, enable_file_upload, enable_conversation_export,
@@ -196,6 +197,7 @@ export function useUpdateTenant() {
           logo_url: tenantData.logo_url,
           font_family,
           background_image_url,
+          hero_image_url,
           hero_title,
           hero_subtitle,
           chat_placeholder,

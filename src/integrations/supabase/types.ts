@@ -986,6 +986,7 @@ export type Database = {
           enable_google_auth: boolean | null
           enable_guest_access: boolean | null
           font_family: string | null
+          hero_image_url: string | null
           hero_subtitle: string | null
           hero_title: string | null
           id: string
@@ -1011,6 +1012,7 @@ export type Database = {
           enable_google_auth?: boolean | null
           enable_guest_access?: boolean | null
           font_family?: string | null
+          hero_image_url?: string | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
@@ -1036,6 +1038,7 @@ export type Database = {
           enable_google_auth?: boolean | null
           enable_guest_access?: boolean | null
           font_family?: string | null
+          hero_image_url?: string | null
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
