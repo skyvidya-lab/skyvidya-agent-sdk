@@ -21,7 +21,8 @@ import { PlusCircle, PanelLeftClose, ChevronRight, AlertTriangle, SendHorizontal
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 interface ChatInterfaceProps {
   tenantId?: string;
   isPlayground?: boolean;
@@ -37,6 +38,8 @@ export function ChatInterface({
   const [newMessageInput, setNewMessageInput] = useState("");
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const {
     tenant
   } = useTenantRouter();
@@ -137,15 +140,67 @@ export function ChatInterface({
   };
   const handleStartNewChat = async () => {
     if (!selectedAgentId || !newMessageInput.trim()) return;
-    const newConv = await createConversation({
-      agentId: selectedAgentId,
-      isPlayground
-    });
-    setSelectedConversationId(newConv.id);
+    
+    try {
+      const newConv = await createConversation({
+        agentId: selectedAgentId,
+        isPlayground
+      });
+      
+      // Atualizar estado
+      setSelectedConversationId(newConv.id);
+      
+      // USAR O ID DA CONVERSA DIRETAMENTE, não depender do estado
+      const { data: userMessage } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: newConv.id,
+          role: "user",
+          content: newMessageInput,
+        })
+        .select()
+        .single();
 
-    // Enviar primeira mensagem
-    await sendMessage(newMessageInput, selectedAgentId);
-    setNewMessageInput("");
+      if (!userMessage) throw new Error("Falha ao criar mensagem do usuário");
+
+      // Chamar o agente
+      const { data: agentResponse, error: agentError } = await supabase.functions.invoke(
+        "call-agent",
+        {
+          body: {
+            agent_id: selectedAgentId,
+            message: newMessageInput,
+            conversation_id: newConv.id,
+          },
+        }
+      );
+
+      if (agentError) throw agentError;
+      if (agentResponse?.error) throw new Error(agentResponse.error);
+
+      // Inserir resposta do assistente
+      await supabase
+        .from("messages")
+        .insert({
+          conversation_id: newConv.id,
+          role: "assistant",
+          content: agentResponse.message,
+          metadata: agentResponse.metadata || {},
+        });
+
+      // Invalidar queries para atualizar UI
+      queryClient.invalidateQueries({ queryKey: ["messages", newConv.id] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      
+      setNewMessageInput("");
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      toast({
+        title: "Erro ao enviar mensagem",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
   };
   const SidebarContent = () => <>
       <div className="p-4 border-b space-y-3">
