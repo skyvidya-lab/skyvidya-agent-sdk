@@ -60,7 +60,13 @@ export function TenantList() {
                     variant="outline" 
                     size="sm"
                     className="flex-1"
-                    onClick={() => window.open(`/${tenant.slug}`, '_blank')}
+                    onClick={() => {
+                      const entryPoint = tenant.tenant_config?.default_entry_point || 'landing';
+                      const targetPath = entryPoint === 'auth' 
+                        ? `/${tenant.slug}/auth` 
+                        : `/${tenant.slug}`;
+                      window.open(targetPath, '_blank');
+                    }}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Ver Página

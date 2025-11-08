@@ -977,6 +977,9 @@ export type Database = {
           background_image_url: string | null
           chat_placeholder: string | null
           created_at: string | null
+          dark_theme_colors: Json | null
+          default_entry_point: string | null
+          default_theme: string | null
           enable_conversation_export: boolean | null
           enable_file_upload: boolean | null
           enable_google_auth: boolean | null
@@ -985,6 +988,7 @@ export type Database = {
           hero_subtitle: string | null
           hero_title: string | null
           id: string
+          light_theme_colors: Json | null
           logo_url: string | null
           primary_color: string | null
           secondary_color: string | null
@@ -997,6 +1001,9 @@ export type Database = {
           background_image_url?: string | null
           chat_placeholder?: string | null
           created_at?: string | null
+          dark_theme_colors?: Json | null
+          default_entry_point?: string | null
+          default_theme?: string | null
           enable_conversation_export?: boolean | null
           enable_file_upload?: boolean | null
           enable_google_auth?: boolean | null
@@ -1005,6 +1012,7 @@ export type Database = {
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
+          light_theme_colors?: Json | null
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
@@ -1017,6 +1025,9 @@ export type Database = {
           background_image_url?: string | null
           chat_placeholder?: string | null
           created_at?: string | null
+          dark_theme_colors?: Json | null
+          default_entry_point?: string | null
+          default_theme?: string | null
           enable_conversation_export?: boolean | null
           enable_file_upload?: boolean | null
           enable_google_auth?: boolean | null
@@ -1025,6 +1036,7 @@ export type Database = {
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
+          light_theme_colors?: Json | null
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null

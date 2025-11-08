@@ -195,6 +195,7 @@ const tenantSchema = z.object({
     title: z.string().default("Bem-vindo"),
     subtitle: z.string().default("Estamos aqui para ajudar"),
   }),
+  default_entry_point: z.enum(['landing', 'auth']).default('landing'),
   enable_google_auth: z.boolean().default(true),
   enable_guest_access: z.boolean().default(false),
   enable_file_upload: z.boolean().default(false),
@@ -264,6 +265,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
         title: "Bem-vindo",
         subtitle: "Estamos aqui para ajudar",
       },
+      default_entry_point: tenant?.tenant_config?.default_entry_point || 'landing',
       enable_google_auth: tenant?.tenant_config?.enable_google_auth ?? true,
       enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
       enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
@@ -300,6 +302,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
           title: "Bem-vindo",
           subtitle: "Estamos aqui para ajudar",
         },
+        default_entry_point: tenant?.tenant_config?.default_entry_point || 'landing',
         enable_google_auth: tenant?.tenant_config?.enable_google_auth ?? true,
         enable_guest_access: tenant?.tenant_config?.enable_guest_access ?? false,
         enable_file_upload: tenant?.tenant_config?.enable_file_upload ?? false,
@@ -866,6 +869,29 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                   </TabsContent>
 
                   <TabsContent value="features" className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="default_entry_point"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Página Inicial Padrão</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="landing">🏠 Landing Page (Hero + CTAs)</SelectItem>
+                              <SelectItem value="auth">🔐 Login/Cadastro Direto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Define qual página o usuário vê ao acessar pela primeira vez
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="enable_google_auth"
