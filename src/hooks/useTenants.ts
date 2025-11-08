@@ -46,13 +46,38 @@ export function useCreateTenant() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user?.id) {
-        await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from("user_roles")
           .insert({
             user_id: user.id,
             tenant_id: tenantResult.id,
             role: 'super_admin',
-          });
+          })
+          .select()
+          .single();
+
+        if (roleError) {
+          console.error("Erro ao criar role de super_admin:", roleError);
+          throw new Error(`Falha ao criar permissões: ${roleError.message}`);
+        }
+
+        console.log("Role super_admin criada com sucesso:", roleData);
+
+        // Verificar se a role foi realmente criada
+        const { data: verifyRole, error: verifyError } = await supabase
+          .from("user_roles")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("tenant_id", tenantResult.id)
+          .eq("role", "super_admin")
+          .maybeSingle();
+
+        if (verifyError || !verifyRole) {
+          console.error("Falha na verificação da role:", verifyError);
+          throw new Error("Role criada mas não encontrada na verificação");
+        }
+
+        console.log("Role verificada com sucesso:", verifyRole);
       }
 
       await supabase
@@ -184,12 +209,38 @@ export function useUpdateTenant() {
       queryClient.invalidateQueries({ queryKey: ["workspace-agents"] });
       toast.success("Workspace atualizado com sucesso");
     },
-    onError: (error: any) => {
-      console.error("Erro ao atualizar workspace:", error);
+    onError: async (error: any) => {
+      console.error("Erro detalhado ao atualizar workspace:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        fullError: error
+      });
+
+      // Verificar se é erro de permissão
+      if (error.code === 'PGRST301' || error.message?.includes('permission') || error.message?.includes('policy')) {
+        // Tentar verificar se o usuário tem role
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("*")
+            .eq("user_id", user.id);
+          
+          console.log("Roles do usuário atual:", roles);
+        }
+
+        toast.error(
+          "Você não tem permissão para editar este workspace. Verifique se você é admin."
+        );
+        return;
+      }
+
       toast.error(
         error.message === "Workspace não encontrado ou sem permissão"
           ? error.message
-          : "Erro ao atualizar workspace. Verifique suas permissões."
+          : `Erro ao atualizar workspace: ${error.message || 'Verifique suas permissões'}`
       );
     },
   });
