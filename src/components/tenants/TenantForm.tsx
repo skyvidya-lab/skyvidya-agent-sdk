@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect } from "react";
-import { Upload, X, Sparkles, Bot } from "lucide-react";
+import { Upload, X, Sparkles, Bot, Palette } from "lucide-react";
 import { ImageGeneratorDialog } from "./ImageGeneratorDialog";
 import type { ImageType } from "@/lib/imagePromptTemplates";
 import { useAllAvailableAgents, useWorkspaceAgents } from "@/hooks/useWorkspaceAgents";
@@ -34,7 +34,7 @@ import { useCreateTenant, useUpdateTenant } from "@/hooks/useTenants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Fontes populares do Google Fonts
+// Fontes populares do Google Fonts (expandido)
 const GOOGLE_FONTS = [
   "Inter",
   "Roboto",
@@ -46,6 +46,68 @@ const GOOGLE_FONTS = [
   "Ubuntu",
   "Nunito",
   "Playfair Display",
+  "Source Sans Pro",
+  "Merriweather",
+  "PT Sans",
+  "Oswald",
+  "Work Sans",
+  "Quicksand",
+  "Fira Sans",
+  "DM Sans",
+  "Space Grotesk",
+  "Plus Jakarta Sans",
+];
+
+// Paletas de cores predefinidas
+const COLOR_PALETTES = [
+  {
+    name: "Azul Profissional",
+    primary: "#0066CC",
+    secondary: "#004C99",
+    accent: "#00A3FF",
+  },
+  {
+    name: "Verde Natureza",
+    primary: "#10B981",
+    secondary: "#059669",
+    accent: "#34D399",
+  },
+  {
+    name: "Roxo Moderno",
+    primary: "#8B5CF6",
+    secondary: "#7C3AED",
+    accent: "#A78BFA",
+  },
+  {
+    name: "Laranja Vibrante",
+    primary: "#F97316",
+    secondary: "#EA580C",
+    accent: "#FB923C",
+  },
+  {
+    name: "Rosa Criativo",
+    primary: "#EC4899",
+    secondary: "#DB2777",
+    accent: "#F472B6",
+  },
+  {
+    name: "Azul Céu",
+    primary: "#0EA5E9",
+    secondary: "#0284C7",
+    accent: "#38BDF8",
+  },
+  {
+    name: "Vermelho Energia",
+    primary: "#EF4444",
+    secondary: "#DC2626",
+    accent: "#F87171",
+  },
+  {
+    name: "Cinza Elegante",
+    primary: "#1F2937",
+    secondary: "#374151",
+    accent: "#6B7280",
+  },
 ];
 
 const tenantSchema = z.object({
@@ -84,7 +146,9 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
   const [uploading, setUploading] = useState(false);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
   const [logoPreview, setLogoPreview] = useState(tenant?.logo_url || "");
+  const [backgroundPreview, setBackgroundPreview] = useState(tenant?.tenant_config?.background_image_url || "");
   const [aiDialogOpen, setAiDialogOpen] = useState(false);
   const [currentImageType, setCurrentImageType] = useState<ImageType>('logo');
 
@@ -160,6 +224,7 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       
       form.reset(defaultValues);
       setLogoPreview(tenant?.logo_url || "");
+      setBackgroundPreview(tenant?.tenant_config?.background_image_url || "");
     }
   }, [tenant, open, currentWorkspaceAgents, form]);
 
@@ -204,6 +269,47 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
     setLogoPreview("");
   };
 
+  const handleBackgroundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10485760) { // 10MB
+      toast.error("Arquivo muito grande. Máximo: 10MB");
+      return;
+    }
+
+    setUploadingBackground(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("tenant-logos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("tenant-logos")
+        .getPublicUrl(filePath);
+
+      form.setValue("background_image_url", data.publicUrl);
+      setBackgroundPreview(data.publicUrl);
+      toast.success("Background enviado com sucesso!");
+    } catch (error) {
+      console.error("Error uploading background:", error);
+      toast.error("Erro ao enviar background");
+    } finally {
+      setUploadingBackground(false);
+    }
+  };
+
+  const removeBackground = () => {
+    form.setValue("background_image_url", "");
+    setBackgroundPreview("");
+  };
+
   const handleOpenAiDialog = (type: ImageType) => {
     setCurrentImageType(type);
     setAiDialogOpen(true);
@@ -215,7 +321,15 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
       setLogoPreview(url);
     } else if (currentImageType === 'background') {
       form.setValue("background_image_url", url);
+      setBackgroundPreview(url);
     }
+  };
+
+  const applyColorPalette = (palette: typeof COLOR_PALETTES[0]) => {
+    form.setValue("primary_color", palette.primary);
+    form.setValue("secondary_color", palette.secondary);
+    form.setValue("accent_color", palette.accent);
+    toast.success(`Paleta "${palette.name}" aplicada!`);
   };
 
   const onSubmit = (data: TenantFormValues) => {
@@ -366,41 +480,92 @@ export function TenantForm({ open, onOpenChange, tenant }: TenantFormProps) {
                           <FormLabel>Imagem de Background</FormLabel>
                           <FormControl>
                             <div className="space-y-2">
-                              {field.value && (
+                              {backgroundPreview && (
                                 <div className="relative w-full h-32 border rounded-lg overflow-hidden">
-                                  <img src={field.value} alt="Background preview" className="w-full h-full object-cover" />
+                                  <img src={backgroundPreview} alt="Background preview" className="w-full h-full object-cover" />
                                   <Button
                                     type="button"
                                     variant="destructive"
                                     size="icon"
                                     className="absolute top-1 right-1 h-6 w-6"
-                                    onClick={() => field.onChange("")}
+                                    onClick={removeBackground}
                                   >
                                     <X className="h-4 w-4" />
                                   </Button>
                                 </div>
                               )}
-                              <div className="flex gap-2">
-                                <Input {...field} placeholder="https://exemplo.com/background.jpg" className="flex-1" />
+                              <div className="grid grid-cols-2 gap-2">
+                                <label className="flex items-center justify-center h-20 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleBackgroundUpload}
+                                    className="hidden"
+                                    disabled={uploadingBackground}
+                                  />
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Upload className="h-5 w-5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">Upload</span>
+                                  </div>
+                                </label>
                                 <Button
                                   type="button"
                                   variant="outline"
                                   onClick={() => handleOpenAiDialog('background')}
-                                  className="shrink-0"
+                                  className="h-20"
                                 >
-                                  <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                                  Gerar com IA
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Sparkles className="h-5 w-5 text-primary" />
+                                    <span className="text-xs">Gerar com IA</span>
+                                  </div>
                                 </Button>
                               </div>
+                              <Input {...field} placeholder="Ou cole uma URL: https://exemplo.com/bg.jpg" />
                             </div>
                           </FormControl>
                           <FormDescription>
-                            URL da imagem de fundo para rotas públicas (ex: /plano-diretor)
+                            Imagem de fundo para rotas públicas (máx: 10MB)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                    
+                    {/* Paletas de Cores Predefinidas */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center gap-2">
+                        <Palette className="h-4 w-4 text-muted-foreground" />
+                        <FormLabel className="text-sm">Paletas Predefinidas</FormLabel>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {COLOR_PALETTES.map((palette) => (
+                          <Button
+                            key={palette.name}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyColorPalette(palette)}
+                            className="justify-start gap-2 h-auto py-2"
+                          >
+                            <div className="flex gap-1">
+                              <div 
+                                className="w-4 h-4 rounded-full border" 
+                                style={{ backgroundColor: palette.primary }}
+                              />
+                              <div 
+                                className="w-4 h-4 rounded-full border" 
+                                style={{ backgroundColor: palette.secondary }}
+                              />
+                              <div 
+                                className="w-4 h-4 rounded-full border" 
+                                style={{ backgroundColor: palette.accent }}
+                              />
+                            </div>
+                            <span className="text-xs">{palette.name}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="grid grid-cols-3 gap-2">
                       <FormField
                         control={form.control}
