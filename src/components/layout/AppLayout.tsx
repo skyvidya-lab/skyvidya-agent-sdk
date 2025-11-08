@@ -5,7 +5,6 @@ import { MobileHeader } from "./MobileHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useTenantBranding } from "@/hooks/useTenantBranding";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -34,9 +33,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     },
     enabled: !!user?.id,
   });
-
-  // Aplicar branding do tenant atual no painel administrativo
-  useTenantBranding(currentTenant as any);
 
   return (
     <SidebarProvider>
